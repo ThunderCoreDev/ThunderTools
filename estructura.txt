@@ -1,0 +1,47 @@
+ThunderTools/
+├─ .github/
+│  └─ workflows/
+│     └─ android-ci.yml
+├─ gradle/
+│  └─ wrapper/
+│     ├─ gradle-wrapper.jar
+│     └─ gradle-wrapper.properties
+├─ app/
+│  ├─ src/
+│  │  ├─ main/
+│  │  │  ├─ AndroidManifest.xml
+│  │  │  ├─ java/com/maritza/thundertools/
+│  │  │  │  ├─ App.kt
+│  │  │  │  ├─ data/
+│  │  │  │  │  ├─ Preferences.kt
+│  │  │  │  │  ├─ OfflineGuard.kt
+│  │  │  │  │  ├─ SoapClient.kt
+│  │  │  │  │  └─ DbClient.kt
+│  │  │  │  ├─ domain/
+│  │  │  │  │  ├─ AdminModules.kt
+│  │  │  │  │  ├─ Emulators.kt
+│  │  │  │  │  └─ Expansions.kt
+│  │  │  │  └─ ui/
+│  │  │  │     ├─ SplashActivity.kt
+│  │  │  │     ├─ LoginActivity.kt
+│  │  │  │     ├─ MainActivity.kt
+│  │  │  │     ├─ SettingsActivity.kt
+│  │  │  │     └─ components/
+│  │  │  │        ├─ ModuleCard.kt
+│  │  │  │        └─ Dialogs.kt
+│  │  │  ├─ res/
+│  │  │  │  ├─ layout/
+│  │  │  │  │  ├─ activity_splash.xml
+│  │  │  │  │  ├─ activity_login.xml
+│  │  │  │  │  ├─ activity_main.xml
+│  │  │  │  │  └─ activity_settings.xml
+│  │  │  │  ├─ values/
+│  │  │  │  │  ├─ colors.xml
+│  │  │  │  │  ├─ strings.xml
+│  │  │  │  │  └─ themes.xml
+│  │  └─ debug/ (opcional)
+├─ build.gradle
+├─ settings.gradle
+├─ gradle.properties
+├─ proguard-rules.pro
+└─ README.md

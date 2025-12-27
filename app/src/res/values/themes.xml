@@ -1,0 +1,14 @@
+<resources>
+    <style name="Theme.ThunderTools" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/thunder_primary</item>
+        <item name="colorSecondary">@color/thunder_electric_blue</item>
+        <item name="android:statusBarColor">@color/thunder_dark_blue</item>
+        <item name="android:navigationBarColor">@color/thunder_dark_blue</item>
+        <item name="materialButtonOutlinedStyle">@style/ThunderOutlinedButton</item>
+    </style>
+
+    <style name="ThunderOutlinedButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textColor">@color/thunder_text</item>
+        <item name="strokeColor">@color/thunder_electric_blue</item>
+    </style>
+</resources>

@@ -1,0 +1,8 @@
+<resources>
+    <color name="thunder_dark_blue">#0B1B2B</color>
+    <color name="thunder_primary">#1D2D50</color>
+    <color name="thunder_primary_variant">#13315C</color>
+    <color name="thunder_electric_blue">#39A0ED</color>
+    <color name="thunder_text">#FFFFFF</color>
+    <color name="thunder_card_bg">#11243A</color>
+</resources>
