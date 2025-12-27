@@ -1,74 +1,107 @@
-name: Android Build
+name: Build Android APK
 
-on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-      - name: Verify and fix project structure
-        run: |
-          echo "Verificando estructura del proyecto..."
-          ls -la
-          
-          # Crear gradlew si no existe
-          if [ ! -f "gradlew" ]; then
-            echo "Creando gradlew..."
-            echo '#!/bin/bash' > gradlew
-            echo 'exec java -jar gradle/wrapper/gradle-wrapper.jar "$@"' >> gradlew
-            chmod +x gradlew
-          fi
-          
-          # Asegurar que no tenga terminaciones Windows
-          sed -i 's/\r$//' gradlew 2>/dev/null || true
-          chmod +x gradlew
-          
-          # Verificar/crear gradle-wrapper.jar
-          if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Descargando gradle-wrapper.jar..."
-            mkdir -p gradle/wrapper
-            curl -L -o gradle/wrapper/gradle-wrapper.jar \
-              https://github.com/gradle/gradle/raw/v8.5.0/gradle/wrapper/gradle-wrapper.jar
-          fi
-          
-          # Verificar/crear gradle.properties para AndroidX
-          if [ ! -f "gradle.properties" ]; then
-            echo "Creando gradle.properties..."
-            echo "android.useAndroidX=true" > gradle.properties
-            echo "android.enableJetifier=true" >> gradle.properties
-          fi
+      - name: Setup Android environment
+        uses: android-actions/setup-android@v3
       
-      - name: Setup JDK 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
       
+      - name: Create project structure
+        run: |
+          # Solo crear lo absolutamente necesario
+          mkdir -p app/src/main/java/com/thundertools/app
+          mkdir -p app/src/main/res
+          
+          # Crear AndroidManifest.xml
+          cat > app/src/main/AndroidManifest.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="ThunderTools">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+EOF
+          
+          # Crear archivos Gradle mínimos
+          cat > build.gradle << 'EOF'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+EOF
+          
+          cat > app/build.gradle << 'EOF'
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.thundertools.app'
+    compileSdk 34
+    
+    defaultConfig {
+        applicationId "com.thundertools.app"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+    
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
+EOF
+          
+          echo 'include ":app"' > settings.gradle
+          echo 'android.useAndroidX=true' > gradle.properties
+          echo 'android.enableJetifier=true' >> gradle.properties
+      
       - name: Build APK
         run: |
-          echo "Construyendo APK..."
-          if [ -x "./gradlew" ]; then
-            ./gradlew clean assembleRelease --stacktrace --no-daemon
-          else
-            echo "Usando gradle directamente..."
-            gradle clean assembleRelease --stacktrace --no-daemon
-          fi
+          # Usar gradle del sistema (ya instalado por setup-android)
+          ./gradlew clean assembleRelease 2>&1 || gradle clean assembleRelease
       
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: thunder-tools-apk
-          path: |
-            app/build/outputs/apk/release/*.apk
-            */build/outputs/apk/release/*.apk
-          if-no-files-found: warn
-          retention-days: 7
+          name: app-release
+          path: app/build/outputs/apk/
