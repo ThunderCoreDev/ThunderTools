@@ -51,15 +51,21 @@ android {
 }
 
 dependencies {
+    // UI y Material Design
     implementation "com.google.android.material:material:1.11.0"
     implementation "androidx.appcompat:appcompat:1.7.0"
     implementation "androidx.constraintlayout:constraintlayout:2.2.0"
     implementation "androidx.recyclerview:recyclerview:1.3.2"
 
+    // DataStore para preferencias
     implementation "androidx.datastore:datastore-preferences:1.0.0"
+
+    // Ciclo de vida
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0"
+
+    // Networking (SOAP via HTTP)
     implementation "com.squareup.okhttp3:okhttp:4.12.0"
 
-    // Opcional: XML simple para SOAP (si deseas construir envelopes complejos)
+    // XML parsing (para SOAP envelopes)
     implementation "org.simpleframework:simple-xml:2.7.1"
 }
