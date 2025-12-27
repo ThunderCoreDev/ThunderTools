@@ -6,36 +6,36 @@ on:
     tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # Permite ejecuci√≥n manual
+  workflow_dispatch:  # Permite ejecuciÛn manual
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-    # 1. Checkout del c√≥digo
+    # 1. Checkout del cÛdigo
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         
-    # 2. üî• SOLUCI√ìN AL ERROR: Corregir terminaciones de l√≠nea
+    # 2.  SOLUCI”N AL ERROR: Corregir terminaciones de lÌnea
     - name: Fix gradlew line endings
       run: |
-        echo "Corrigiendo terminaciones de l√≠nea CRLF -> LF"
+        echo "Corrigiendo terminaciones de lÌnea CRLF -> LF"
         sed -i 's/\r$//' gradlew
         chmod +x gradlew
         
     # 3. Configurar JDK
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         
-    # 4. Configurar cach√© de Gradle (acelera builds)
+    # 4. Configurar cachÈ de Gradle (acelera builds)
     - name: Cache Gradle dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -44,9 +44,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
           
-    # 5. Configurar SDK de Android (opcional, si necesitas versi√≥n espec√≠fica)
+    # 5. Configurar SDK de Android (opcional)
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
+      uses: android-actions/setup-android@v3
       
     # 6. Dar permisos al script gradlew
     - name: Make gradlew executable
@@ -72,30 +72,35 @@ jobs:
       run: |
         echo "APKs generadas:"
         find . -name "*.apk" -type f | xargs ls -la
+        echo "AABs generados:"
+        find . -name "*.aab" -type f | xargs ls -la
         
-    # 10. Subir APKs como artifact
+    # 10. Subir APKs como artifact (VERSI”N ACTUALIZADA v4)
     - name: Upload APK Release
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-release-apk
         path: |
           **/build/outputs/apk/release/*.apk
-          **/build/outputs/bundle/release/*.aab  # Si tambi√©n generas AAB
+          **/build/outputs/bundle/release/*.aab
+        if-no-files-found: error
         retention-days: 7
         
     # 11. Subir APK Debug (opcional)
     - name: Upload APK Debug (Opcional)
-      uses: actions/upload-artifact@v3
+      if: success() || failure()  # Se ejecuta siempre
+      uses: actions/upload-artifact@v4
       with:
         name: app-debug-apk
         path: |
           **/build/outputs/apk/debug/*.apk
-        retention-days: 7
         if-no-files-found: ignore
+        retention-days: 7
         
-    # 12. Notificaci√≥n de √©xito (opcional)
+    # 12. NotificaciÛn de Èxito
     - name: Build Success Notification
       if: success()
       run: |
-        echo "‚úÖ Build completado exitosamente!"
-        echo "Las APKs est√°n disponibles en la secci√≥n 'Artifacts'"
+        echo " Build completado exitosamente!"
+        echo " Las APKs est·n disponibles en la secciÛn 'Artifacts'"
+        echo " Descarga en: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
