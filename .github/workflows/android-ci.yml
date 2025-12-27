@@ -1,49 +1,101 @@
-name: Android CI
+name: Android Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main, master, develop ]
+    tags: [ 'v*' ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main, master ]
+  workflow_dispatch:  # Permite ejecución manual
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      # 1. Checkout del código
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # 2. Configurar JDK 17 (requerido por AGP 8+)
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      # 3. Configurar caché de Gradle
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      # 4. Dar permisos al gradlew
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      # 5. Compilar APK firmado
-      - name: Build Release APK
-        run: ./gradlew clean assembleRelease
-
-      # 6. Guardar APK como artefacto
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: ThunderTools-APK
-          path: app/build/outputs/apk/release/*.apk
+    # 1. Checkout del código
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    # 2. 🔥 SOLUCIÓN AL ERROR: Corregir terminaciones de línea
+    - name: Fix gradlew line endings
+      run: |
+        echo "Corrigiendo terminaciones de línea CRLF -> LF"
+        sed -i 's/\r$//' gradlew
+        chmod +x gradlew
+        
+    # 3. Configurar JDK
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    # 4. Configurar caché de Gradle (acelera builds)
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    # 5. Configurar SDK de Android (opcional, si necesitas versión específica)
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+      
+    # 6. Dar permisos al script gradlew
+    - name: Make gradlew executable
+      run: |
+        chmod +x gradlew || true
+        ls -la gradlew
+        
+    # 7. Build de la APK Release
+    - name: Build Release APK
+      run: |
+        echo "Iniciando build de APK..."
+        ./gradlew clean assembleRelease --no-daemon --stacktrace
+        echo "Build completado!"
+        
+    # 8. Build de la APK Debug (opcional)
+    - name: Build Debug APK (Opcional)
+      run: |
+        ./gradlew assembleDebug --no-daemon
+      continue-on-error: true
+      
+    # 9. Listar archivos generados
+    - name: List generated APKs
+      run: |
+        echo "APKs generadas:"
+        find . -name "*.apk" -type f | xargs ls -la
+        
+    # 10. Subir APKs como artifact
+    - name: Upload APK Release
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release-apk
+        path: |
+          **/build/outputs/apk/release/*.apk
+          **/build/outputs/bundle/release/*.aab  # Si también generas AAB
+        retention-days: 7
+        
+    # 11. Subir APK Debug (opcional)
+    - name: Upload APK Debug (Opcional)
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug-apk
+        path: |
+          **/build/outputs/apk/debug/*.apk
+        retention-days: 7
+        if-no-files-found: ignore
+        
+    # 12. Notificación de éxito (opcional)
+    - name: Build Success Notification
+      if: success()
+      run: |
+        echo "✅ Build completado exitosamente!"
+        echo "Las APKs están disponibles en la sección 'Artifacts'"
