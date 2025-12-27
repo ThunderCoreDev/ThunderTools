@@ -1,16 +1,21 @@
-name: Android Build
+# Elimina el archivo problemático
+rm .github/workflows/android-ci.yml
+
+# Crea un nuevo archivo SIMPLE
+cat > .github/workflows/build-android.yml << 'EOF'
+name: Build Android APK
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -19,14 +24,17 @@ jobs:
           distribution: 'temurin'
       
       - name: Install Gradle
-        run: sudo apt-get update && sudo apt-get install -y gradle
+        run: sudo apt-get install -y gradle
       
-      - name: Create minimal files
+      - name: Create basic project files
         run: |
+          # Crear estructura mínima
           mkdir -p app/src/main
+          
+          # Crear AndroidManifest.xml simple
           echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/AndroidManifest.xml
           echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android">' >> app/src/main/AndroidManifest.xml
-          echo '  <application android:label="App">' >> app/src/main/AndroidManifest.xml
+          echo '  <application android:label="MyApp">' >> app/src/main/AndroidManifest.xml
           echo '    <activity android:name=".MainActivity">' >> app/src/main/AndroidManifest.xml
           echo '      <intent-filter>' >> app/src/main/AndroidManifest.xml
           echo '        <action android:name="android.intent.action.MAIN" />' >> app/src/main/AndroidManifest.xml
@@ -36,24 +44,32 @@ jobs:
           echo '  </application>' >> app/src/main/AndroidManifest.xml
           echo '</manifest>' >> app/src/main/AndroidManifest.xml
           
-          echo 'plugins { id "com.android.application" }' > app/build.gradle
-          echo 'android { compileSdk 34 }' >> app/build.gradle
-          
+          # Crear build.gradle raíz
           echo 'buildscript {' > build.gradle
-          echo '  dependencies {' >> build.gradle
-          echo '    classpath "com.android.tools.build:gradle:8.2.0"' >> build.gradle
-          echo '  }' >> build.gradle
+          echo '    dependencies {' >> build.gradle
+          echo '        classpath "com.android.tools.build:gradle:8.2.0"' >> build.gradle
+          echo '    }' >> build.gradle
           echo '}' >> build.gradle
           
+          # Crear app/build.gradle
+          echo 'plugins {' > app/build.gradle
+          echo '    id "com.android.application"' >> app/build.gradle
+          echo '}' >> app/build.gradle
+          echo '' >> app/build.gradle
+          echo 'android {' >> app/build.gradle
+          echo '    compileSdk 34' >> app/build.gradle
+          echo '}' >> app/build.gradle
+          
+          # Otros archivos necesarios
           echo 'include ":app"' > settings.gradle
           echo 'android.useAndroidX=true' > gradle.properties
-          echo 'android.enableJetifier=true' >> gradle.properties
       
       - name: Build APK
-        run: gradle clean assembleRelease --stacktrace
+        run: gradle clean assembleRelease
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
+          name: apk-file
           path: app/build/outputs/apk/
+EOF
