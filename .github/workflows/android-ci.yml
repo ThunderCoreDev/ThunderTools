@@ -5,55 +5,91 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # Para ejecución manual
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-    # 1. Descargar el código
-    - name: Checkout code
-      uses: actions/checkout@v4
+      # 1. Descargar código
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-    # 2. Configurar Java
-    - name: Setup JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-    
-    # 3. Corregir problemas de Windows
-    - name: Fix line endings
-      run: |
-        sed -i 's/\r$//' gradlew
-        chmod +x gradlew
-    
-    # 4. Configurar Android SDK
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
+      # 2. Verificar y crear estructura
+      - name: Verify project structure
+        run: |
+          echo "Verificando estructura del proyecto..."
+          ls -la
+          echo "---"
+          if [ -f "gradlew" ]; then
+            echo " gradlew encontrado"
+            # Asegurar que no tenga terminaciones Windows
+            sed -i 's/\r$//' gradlew
+            chmod +x gradlew
+          else
+            echo " gradlew no encontrado, creando..."
+            cat > gradlew << 'EOF'
+          #!/bin/bash
+          exec java -jar gradle/wrapper/gradle-wrapper.jar "$@"
+          EOF
+            chmod +x gradlew
+          fi
+          
+          # Verificar gradle-wrapper.jar
+          if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo " gradle-wrapper.jar no encontrado, descargando..."
+            mkdir -p gradle/wrapper
+            curl -L -o gradle/wrapper/gradle-wrapper.jar \
+              https://github.com/gradle/gradle/raw/v8.5.0/gradle/wrapper/gradle-wrapper.jar
+          fi
+          
+          # Verificar build.gradle
+          if [ ! -f "build.gradle" ] && [ ! -f "build.gradle.kts" ]; then
+            echo " build.gradle no encontrado, creando básico..."
+            cat > build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application' version '8.2.0' apply false
+          }
+          task clean(type: Delete) {
+              delete rootProject.buildDir
+          }
+          EOF
+          fi
       
-    # 5. Cache para Gradle
-    - name: Cache Gradle dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-          ~/.android/build-cache
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    
-    # 6. Construir APK
-    - name: Build APK
-      run: |
-        ./gradlew clean assembleRelease --stacktrace
-    
-    # 7. Subir APK
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: thunder-tools-apk
-        path: app/build/outputs/apk/release/*.apk
-        retention-days: 7
+      # 3. Configurar Java
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      # 4. Dar permisos correctos
+      - name: Set permissions
+        run: |
+          ls -la gradlew
+          file gradlew
+          ./gradlew --version || echo "Continuando..."
+      
+      # 5. Construir APK (OPCIÓN A - Con gradlew)
+      - name: Build APK with Gradle Wrapper
+        run: |
+          echo "Intentando construir con gradlew..."
+          if [ -x "./gradlew" ]; then
+            ./gradlew clean assembleRelease --stacktrace --no-daemon
+          else
+            echo "gradlew no es ejecutable, usando gradle directamente"
+            gradle clean assembleRelease --stacktrace --no-daemon
+          fi
+      
+      # 6. Subir APK
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: thunder-tools-apk
+          path: |
+            app/build/outputs/apk/release/*.apk
+            */build/outputs/apk/release/*.apk
+            **/build/outputs/apk/**/*release*.apk
+          if-no-files-found: warn
+          retention-days: 7
