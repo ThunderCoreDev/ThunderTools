@@ -1,8 +1,8 @@
-name: Android CI
+name: Android Build
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -20,91 +19,33 @@ jobs:
           distribution: 'temurin'
       
       - name: Install Gradle
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gradle
-          gradle --version
+        run: sudo apt-get update && sudo apt-get install -y gradle
       
-      - name: Create minimal Android project
+      - name: Create minimal files
         run: |
-          # Crear estructura básica
-          mkdir -p app/src/main/java/com/thundertools/app
-          mkdir -p app/src/main/res
+          mkdir -p app/src/main
+          echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/AndroidManifest.xml
+          echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android">' >> app/src/main/AndroidManifest.xml
+          echo '  <application android:label="App">' >> app/src/main/AndroidManifest.xml
+          echo '    <activity android:name=".MainActivity">' >> app/src/main/AndroidManifest.xml
+          echo '      <intent-filter>' >> app/src/main/AndroidManifest.xml
+          echo '        <action android:name="android.intent.action.MAIN" />' >> app/src/main/AndroidManifest.xml
+          echo '        <category android:name="android.intent.category.LAUNCHER" />' >> app/src/main/AndroidManifest.xml
+          echo '      </intent-filter>' >> app/src/main/AndroidManifest.xml
+          echo '    </activity>' >> app/src/main/AndroidManifest.xml
+          echo '  </application>' >> app/src/main/AndroidManifest.xml
+          echo '</manifest>' >> app/src/main/AndroidManifest.xml
           
-          # Crear AndroidManifest.xml
-          cat > app/src/main/AndroidManifest.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:label="ThunderTools">
-        <activity android:name=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-EOF
+          echo 'plugins { id "com.android.application" }' > app/build.gradle
+          echo 'android { compileSdk 34 }' >> app/build.gradle
           
-          # Crear build.gradle raíz
-          cat > build.gradle << 'EOF'
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.0'
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
-EOF
+          echo 'buildscript {' > build.gradle
+          echo '  dependencies {' >> build.gradle
+          echo '    classpath "com.android.tools.build:gradle:8.2.0"' >> build.gradle
+          echo '  }' >> build.gradle
+          echo '}' >> build.gradle
           
-          # Crear app/build.gradle
-          cat > app/build.gradle << 'EOF'
-plugins {
-    id 'com.android.application'
-}
-
-android {
-    namespace 'com.thundertools.app'
-    compileSdk 34
-    
-    defaultConfig {
-        applicationId "com.thundertools.app"
-        minSdk 21
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
-    }
-    
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
-}
-
-dependencies {
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-}
-EOF
-          
-          # Crear settings.gradle
           echo 'include ":app"' > settings.gradle
-          
-          # Crear gradle.properties para AndroidX
           echo 'android.useAndroidX=true' > gradle.properties
           echo 'android.enableJetifier=true' >> gradle.properties
       
@@ -114,5 +55,5 @@ EOF
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: app/build/outputs/apk/release/*.apk
+          name: android-apk
+          path: app/build/outputs/apk/
