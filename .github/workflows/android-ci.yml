@@ -1,16 +1,17 @@
-name: Build Android APK
+name: Android CI
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Android environment
-        uses: android-actions/setup-android@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -18,9 +19,15 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       
-      - name: Create project structure
+      - name: Install Gradle
         run: |
-          # Solo crear lo absolutamente necesario
+          sudo apt-get update
+          sudo apt-get install -y gradle
+          gradle --version
+      
+      - name: Create minimal Android project
+        run: |
+          # Crear estructura básica
           mkdir -p app/src/main/java/com/thundertools/app
           mkdir -p app/src/main/res
           
@@ -39,7 +46,7 @@ jobs:
 </manifest>
 EOF
           
-          # Crear archivos Gradle mínimos
+          # Crear build.gradle raíz
           cat > build.gradle << 'EOF'
 buildscript {
     repositories {
@@ -63,6 +70,7 @@ task clean(type: Delete) {
 }
 EOF
           
+          # Crear app/build.gradle
           cat > app/build.gradle << 'EOF'
 plugins {
     id 'com.android.application'
@@ -88,20 +96,23 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
 }
 EOF
           
+          # Crear settings.gradle
           echo 'include ":app"' > settings.gradle
+          
+          # Crear gradle.properties para AndroidX
           echo 'android.useAndroidX=true' > gradle.properties
           echo 'android.enableJetifier=true' >> gradle.properties
       
       - name: Build APK
-        run: |
-          # Usar gradle del sistema (ya instalado por setup-android)
-          ./gradlew clean assembleRelease 2>&1 || gradle clean assembleRelease
+        run: gradle clean assembleRelease --stacktrace
       
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: app/build/outputs/apk/
+          path: app/build/outputs/apk/release/*.apk
