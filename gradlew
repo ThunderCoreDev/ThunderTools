@@ -1,13 +1,9 @@
-
 #!/usr/bin/env bash
-
-# Simple Gradle wrapper for ThunderTools
-GRADLE_WRAPPER_JAR="gradle/wrapper/gradle-wrapper.jar"
-
-if [ ! -f "$GRADLE_WRAPPER_JAR" ]; then
-    echo "Error: Gradle wrapper JAR not found at $GRADLE_WRAPPER_JAR"
-    echo "Make sure you have gradle/wrapper/gradle-wrapper.properties"
+# ThunderTools Gradle Wrapper - Linux/Mac
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+WRAPPER_JAR="$BASE_DIR/gradle/wrapper/gradle-wrapper.jar"
+if [ ! -f "$WRAPPER_JAR" ]; then
+    echo "ERROR: gradle-wrapper.jar not found at $WRAPPER_JAR"
     exit 1
 fi
-
-exec java -jar "$GRADLE_WRAPPER_JAR" "$@"
+exec java -jar "$WRAPPER_JAR" "$@"
