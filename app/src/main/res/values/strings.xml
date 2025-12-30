@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">ThunderTools</string>
+    <string name="welcome">Bienvenido a ThunderTools</string>
+    <string name="login">Iniciar Sesión</string>
+    <string name="username">Usuario</string>
+    <string name="password">Contraseña</string>
+    <string name="login_error">Error en las credenciales</string>
+    <string name="offline_mode">Modo offline</string>
+    <string name="requires_connection">Requiere conexión al servidor</string>
+    <string name="copyright">© 2026+ ThunderTools. All rights reserved.</string>
+</resources>

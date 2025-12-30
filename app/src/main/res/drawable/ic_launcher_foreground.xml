@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Fondo cuadrado azul oscuro estilo Blizzard -->
+    <path
+        android:fillColor="#0A0F1F"
+        android:pathData="M24,0L84,0A24,24 0,0 1,108 24L108,84A24,24 0,0 1,84 108L24,108A24,24 0,0 1,0 84L0,24A24,24 0,0 1,24 0z" />
+    
+    <!-- Borde azul eléctrico sutil -->
+    <path
+        android:fillColor="#00B4FF"
+        android:fillAlpha="0.3"
+        android:pathData="M24,4L84,4A20,20 0,0 1,104 24L104,84A20,20 0,0 1,84 104L24,104A20,20 0,0 1,4 84L4,24A20,20 0,0 1,24 4z"
+        android:strokeWidth="2"
+        android:strokeColor="#00B4FF" />
+    
+    <!-- Letra T izquierda -->
+    <path
+        android:fillColor="#00B4FF"
+        android:pathData="M25,40 L25,70 L35,70 L35,50 L45,50 L45,40 Z" />
+    
+    <!-- Rayo azul eléctrico con sombra -->
+    <group>
+        <!-- Sombra del rayo -->
+        <path
+            android:fillColor="#0066CC"
+            android:pathData="M50,30 L58,42 L54,42 L62,70 L70,70 L62,42 L66,42 L58,30 Z"
+            android:translateX="1"
+            android:translateY="1" />
+        
+        <!-- Rayo principal -->
+        <path
+            android:fillColor="#00B4FF"
+            android:pathData="M50,30 L58,42 L54,42 L62,70 L70,70 L62,42 L66,42 L58,30 Z" />
+    </group>
+    
+    <!-- Letra T derecha -->
+    <path
+        android:fillColor="#00B4FF"
+        android:pathData="M75,40 L75,70 L85,70 L85,50 L95,50 L95,40 Z" />
+    
+    <!-- Efecto de brillo en el rayo -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.3"
+        android:pathData="M52,32 L56,38 L53,38 L58,58 L65,58 L60,38 L63,38 L58,32 Z" />
+</vector>
