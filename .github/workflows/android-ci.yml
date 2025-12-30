@@ -1,64 +1,66 @@
-name: Build Android APK
+name: Android CI
 
-on:
-  push:
-    branches: [main, master]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Make gradlew executable
-        run: |
-          if [ -f "gradlew" ]; then
-            chmod +x gradlew
-          fi
-
-      # Opcional: Limpiar caché (no es necesario cada vez)
-      - name: Clean Build Cache
-        run: |
-          if [ -f "gradlew" ]; then
-            ./gradlew cleanBuildCache || true
-          fi
-
-      - name: Build APK
-        run: |
-          if [ -f "gradlew" ]; then
-            ./gradlew assembleDebug
-          else
-            sudo apt-get update
-            sudo apt-get install -y gradle
-            gradle assembleDebug
-          fi
-
-      - name: Find APK file
-        id: find-apk
-        run: |
-          APK_FILE=$(find . -name "*.apk" -type f | grep -i debug | grep -v unaligned | head -1)
-          if [ -n "$APK_FILE" ]; then
-            echo "APK found: $APK_FILE"
-            echo "path=$APK_FILE" >> $GITHUB_OUTPUT
-          else
-            echo "No APK found"
-            find . -name "*.apk" -type f
-            exit 1
-          fi
-
-      - name: Upload APK
-        if: steps.find-apk.outputs.path
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
-          path: ${{ steps.find-apk.outputs.path }}
-          retention-days: 7
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Create Clean gradlew
+      run: |
+        # ELIMINAR cualquier gradlew existente (puede estar corrupto)
+        rm -f gradlew gradlew.bat
+        
+        # CREAR NUEVO gradlew desde CERO
+        cat > gradlew << 'EOF'
+#!/usr/bin/env bash
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+WRAPPER_JAR="$BASE_DIR/gradle/wrapper/gradle-wrapper.jar"
+if [ ! -f "$WRAPPER_JAR" ]; then
+    echo "ERROR: gradle-wrapper.jar not found"
+    exit 1
+fi
+exec java -jar "$WRAPPER_JAR" "$@"
+EOF
+        
+        # Hacer ejecutable
+        chmod +x gradlew
+        
+        # VERIFICAR que no tenga \r
+        echo "=== Verificando gradlew ==="
+        head -n1 gradlew
+        echo "Tamaño: $(wc -l < gradlew) líneas"
+        
+        # Verificar con od (muestra caracteres ocultos)
+        echo "=== Caracteres ocultos (no debe mostrar \r) ==="
+        head -n1 gradlew | od -c | head -5
+    
+    - name: Download gradle-wrapper.jar
+      run: |
+        mkdir -p gradle/wrapper
+        if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+          echo "Descargando gradle-wrapper.jar..."
+          curl -L -s -o gradle/wrapper/gradle-wrapper.jar \
+            https://repo.maven.apache.org/maven2/org/grails/grails-gradle-wrapper/8.2/grails-gradle-wrapper-8.2.jar
+        fi
+        ls -lh gradle/wrapper/
+    
+    - name: Build APK
+      run: |
+        echo "=== Ejecutando Gradle ==="
+        ./gradlew :app:assembleDebug --stacktrace
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: ThunderTools-APK
+        path: app/build/outputs/apk/debug/
