@@ -2,9 +2,9 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
@@ -13,87 +13,110 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout código
-      uses: actions/checkout@v4
-    
-    - name: Setup JDK 17
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-    
-    - name: Verificar estructura del proyecto Android
-      id: check-android
-      run: |
-        echo "=== VERIFICANDO ESTRUCTURA ANDROID ==="
-        echo "Directorio actual: $(pwd)"
-        ls -la
-        
-        # Buscar archivos Android
-        if [ -f "build.gradle" ] || [ -f "app/build.gradle" ]; then
-          echo " Proyecto Android encontrado"
-          echo "is-android=true" >> $GITHUB_OUTPUT
-        else
-          echo " No es proyecto Android"
-          echo "is-android=false" >> $GITHUB_OUTPUT
-        fi
-        
-        # Verificar Gradle wrapper
-        if [ -f "gradlew" ]; then
-          echo " Gradle wrapper encontrado"
-          chmod +x gradlew
-        fi
-    
-    - name: Setup Android SDK
-      if: steps.check-android.outputs.is-android == 'true'
-      uses: android-actions/setup-android@v2
-    
-    - name: Cache Gradle
-      if: steps.check-android.outputs.is-android == 'true'
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    
-    - name: Build APK con Gradle
-      if: steps.check-android.outputs.is-android == 'true'
-      run: |
-        echo "=== BUILD APK ==="
-        
-        # Verificar si existe gradlew
-        if [ -f "gradlew" ]; then
-          ./gradlew assembleDebug --no-daemon
-        else
-          # Si no hay gradlew, usar gradle directamente
-          gradle assembleDebug
-        fi
-        
-        echo " APK generado"
-    
-    - name: Buscar APK generada
-      if: steps.check-android.outputs.is-android == 'true'
-      run: |
-        echo "=== BUSCANDO APK ==="
-        find . -name "*.apk" -type f | head -20 || echo "No se encontraron APKs"
-        
-        # Buscar en ubicaciones comunes
-        for dir in app/build/outputs/apk/debug app/build/outputs/apk/release build/outputs/apk; do
-          if [ -d "$dir" ]; then
-            echo "APKs en $dir:"
-            ls -la "$dir/" || true
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Verificar estructura del proyecto
+        id: check-project
+        run: |
+          echo "=== VERIFICANDO PROYECTO ==="
+          echo "Directorio actual: $(pwd)"
+          ls -la
+          
+          # Buscar archivos de Android
+          if [ -f "build.gradle" ] || [ -f "app/build.gradle" ]; then
+            echo "Proyecto Android encontrado"
+            echo "is-android=true" >> $GITHUB_OUTPUT
+          else
+            echo "No se encontró build.gradle"
+            echo "is-android=false" >> $GITHUB_OUTPUT
           fi
-        done
-    
-    - name: Subir APK como artefacto
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-apk
-        path: |
-          **/*.apk
-          !**/*-unaligned.apk
-        if-no-files-found: error
-        retention-days: 30
+      
+      - name: Dar permisos a Gradle wrapper
+        if: steps.check-project.outputs.is-android == 'true'
+        run: |
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            echo "Permisos dados a gradlew"
+          fi
+      
+      - name: Cache de Gradle
+        if: steps.check-project.outputs.is-android == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      
+      - name: Build APK de debug
+        if: steps.check-project.outputs.is-android == 'true'
+        run: |
+          echo "=== COMPILANDO APK DEBUG ==="
+          
+          if [ -f "gradlew" ]; then
+            ./gradlew assembleDebug --no-daemon
+          else
+            echo "Instalando Gradle..."
+            sudo apt-get update
+            sudo apt-get install -y gradle
+            gradle assembleDebug
+          fi
+          
+          echo "Build completado"
+      
+      - name: Build APK de release
+        if: steps.check-project.outputs.is-android == 'true'
+        run: |
+          echo "=== COMPILANDO APK RELEASE ==="
+          
+          if [ -f "gradlew" ]; then
+            ./gradlew assembleRelease --no-daemon
+          else
+            gradle assembleRelease
+          fi
+          
+          echo "Build release completado"
+      
+      - name: Buscar archivos APK
+        if: steps.check-project.outputs.is-android == 'true'
+        run: |
+          echo "=== BUSCANDO ARCHIVOS APK ==="
+          
+          # Buscar en directorios comunes
+          find . -type f -name "*.apk" 2>/dev/null | head -20 || echo "No se encontraron APKs"
+          
+          echo "--- Directorios comunes ---"
+          for dir in app/build/outputs/apk app/build/outputs/apk/debug app/build/outputs/apk/release; do
+            if [ -d "$dir" ]; then
+              echo "Contenido de $dir:"
+              ls -la "$dir/"
+            fi
+          done
+      
+      - name: Subir APKs como artefactos
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apks
+          path: |
+            **/*.apk
+            !**/*-unaligned.apk
+          if-no-files-found: warn
+          retention-days: 30
+      
+      - name: Mostrar información del build
+        if: always()
+        run: |
+          echo "=== RESUMEN DEL BUILD ==="
+          echo "Proyecto: ThunderTools"
+          echo "SHA: ${{ github.sha }}"
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Fecha: $(date)"
