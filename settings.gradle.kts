@@ -14,4 +14,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ThunderTools"
-include(":app")  # ← ¡ESTA LÍNEA ES CRÍTICA!
+include(":app")
