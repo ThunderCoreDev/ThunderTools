@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,15 +25,22 @@ jobs:
             chmod +x gradlew
           fi
 
+      # Opcional: Limpiar caché (no es necesario cada vez)
+      - name: Clean Build Cache
+        run: |
+          if [ -f "gradlew" ]; then
+            ./gradlew cleanBuildCache || true
+          fi
+
       - name: Build APK
-  run: |
-    if [ -f "gradlew" ]; then
-      ./gradlew assembleDebug  # ← ¡SIN 'clean'!
-    else
-      sudo apt-get update
-      sudo apt-get install -y gradle
-      gradle assembleDebug  # ← ¡SIN 'clean'!
-    fi
+        run: |
+          if [ -f "gradlew" ]; then
+            ./gradlew assembleDebug
+          else
+            sudo apt-get update
+            sudo apt-get install -y gradle
+            gradle assembleDebug
+          fi
 
       - name: Find APK file
         id: find-apk
@@ -44,6 +52,7 @@ jobs:
           else
             echo "No APK found"
             find . -name "*.apk" -type f
+            exit 1
           fi
 
       - name: Upload APK
