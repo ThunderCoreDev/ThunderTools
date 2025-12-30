@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tema principal Battle.net Style -->
-    <style name="Theme.ThunderTools" parent="Theme.Material3.Dark">
+    <!-- Tema principal MUY SIMPLE -->
+    <style name="Theme.ThunderTools" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/background_dark</item>
         <item name="android:statusBarColor">@color/dark_blue</item>
         <item name="android:navigationBarColor">@color/dark_blue</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         
-        <!-- Colores personalizados -->
-        <item name="colorPrimary">@color/electric_blue</item>
-        <item name="colorSecondary">@color/dark_blue</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <!-- Para Compose -->
+        <item name="android:forceDarkAllowed">false</item>
     </style>
     
-    <!-- Tema Splash Screen simplificado -->
-    <style name="Theme.ThunderTools.Splash" parent="Theme.AppCompat.NoActionBar">
+    <!-- Tema Splash Screen - EXTREMADAMENTE SIMPLE -->
+    <style name="Theme.ThunderTools.Splash" parent="android:Theme">
         <item name="android:windowBackground">@color/dark_blue</item>
         <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
     </style>
 </resources>
