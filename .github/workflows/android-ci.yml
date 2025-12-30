@@ -1,90 +1,95 @@
-name: Build Debug APK
+name: Build APK con Artefactos
 
 on:
   push:
     branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
-  build-debug:
+  build:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout código
+      uses: actions/checkout@v4
     
-    - name: Setup Java
+    - name: Setup JDK 17
       uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
         java-version: '17'
     
-    - name: Listar proyecto
+    - name: Hacer gradlew ejecutable
       run: |
-        echo "Tu proyecto tiene:"
-        ls -la
-        echo ""
-        echo "¿Hay build.gradle?"
-        [ -f "build.gradle" ] && echo "SÍ" || echo "NO"
-        echo ""
-        echo "¿Hay app/build.gradle?"
-        [ -f "app/build.gradle" ] && echo "SÍ" || echo "NO"
-    
-    - name: Compilar directamente
-      run: |
-        echo "=== COMPILACIÓN DIRECTA ==="
-        
-        # Opción 1: Si hay gradlew
         if [ -f "gradlew" ]; then
-          echo "Usando gradlew..."
           chmod +x gradlew
-          ./gradlew assembleDebug
-          
-        # Opción 2: Si hay build.gradle pero no gradlew
-        elif [ -f "build.gradle" ]; then
-          echo "Instalando Gradle..."
-          sudo apt-get update
-          sudo apt-get install -y gradle
-          gradle assembleDebug
-          
-        # Opción 3: Si está en app/
-        elif [ -f "app/build.gradle" ]; then
-          echo "Proyecto en app/"
-          if [ -f "../gradlew" ]; then
-            chmod +x ../gradlew
-            ../gradlew assembleDebug
-          else
-            sudo apt-get install -y gradle
-            gradle assembleDebug
-          fi
-          
+          echo " gradlew preparado"
         else
-          echo "ERROR: No se encontró proyecto Android"
+          echo " No hay gradlew, se usará Gradle instalado"
+        fi
+    
+    - name: Compilar APK Debug
+      id: compile
+      run: |
+        echo "=== COMPILANDO APK DEBUG ==="
+        
+        # Compilar
+        if [ -f "gradlew" ]; then
+          ./gradlew clean assembleDebug --no-daemon
+        else
+          gradle clean assembleDebug
+        fi
+        
+        echo " Compilación completada"
+    
+    - name: Buscar APK exacta
+      id: find-apk
+      run: |
+        echo "=== BUSCANDO APK GENERADA ==="
+        
+        # Buscar la APK debug específica
+        APK_PATH=$(find . -path "*/outputs/apk/debug/*debug.apk" -type f 2>/dev/null | head -1)
+        
+        if [ -n "$APK_PATH" ]; then
+          echo " APK encontrada: $APK_PATH"
+          echo "Tamaño: $(ls -lh "$APK_PATH" | awk '{print $5}')"
+          
+          # Guardar la ruta para el siguiente paso
+          echo "apk-path=$APK_PATH" >> $GITHUB_OUTPUT
+          
+          # Mostrar estructura
+          echo "Estructura del directorio:"
+          dir_path=$(dirname "$APK_PATH")
+          ls -la "$dir_path/"
+        else
+          echo " No se encontró APK en la ruta esperada"
+          echo "Buscando cualquier APK..."
+          find . -name "*.apk" -type f 2>/dev/null
           exit 1
         fi
-        
-        echo "Compilación terminada"
     
-    - name: Mostrar resultado
-      run: |
-        echo "=== ¿SE GENERÓ LA APK? ==="
-        echo "Buscando archivo .apk..."
-        
-        # Buscar simple
-        APK_FILE=$(find . -name "*debug*.apk" -type f 2>/dev/null | head -1)
-        
-        if [ -n "$APK_FILE" ]; then
-          echo " ¡ÉXITO! APK generada:"
-          echo "   Archivo: $APK_FILE"
-          echo "   Tamaño: $(ls -lh "$APK_FILE" | awk '{print $5}')"
-          echo "   Ruta: $(pwd)/$APK_FILE"
-        else
-          echo " No se encontró APK debug"
-          echo "Buscando cualquier .apk..."
-          find . -name "*.apk" -type f 2>/dev/null | head -5
-        fi
+    - name: Subir APK como artefacto (CORREGIDO)
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-apk
+        path: ${{ steps.find-apk.outputs.apk-path }}
+        retention-days: 7
     
-    - name: Ver logs de compilación
-      if: failure()
+    - name: Subir también AAB si existe
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-bundle
+        path: |
+          **/*.aab
+        if-no-files-found: ignore
+        retention-days: 7
+    
+    - name: Mostrar resumen
       run: |
-        echo "=== ULTIMAS 50 LÍNEAS DE LOG ==="
-        find . -name "*.log" -type f -exec tail -50 {} \; 2>/dev/null || echo "No hay logs"
+        echo "=== RESUMEN ==="
+        echo " Build completado exitosamente!"
+        echo " APK disponible en la pestaña 'Artifacts'"
+        echo "  Hora: $(date)"
+        echo " SHA: ${{ github.sha }}"
