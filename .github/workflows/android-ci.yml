@@ -1,13 +1,17 @@
 name: Android CI
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up JDK 17
       uses: actions/setup-java@v3
@@ -17,10 +21,10 @@ jobs:
     
     - name: Create Clean gradlew
       run: |
-        # ELIMINAR cualquier gradlew existente (puede estar corrupto)
-        rm -f gradlew gradlew.bat
+        # Eliminar cualquier gradlew existente
+        rm -f gradlew
         
-        # CREAR NUEVO gradlew desde CERO
+        # Crear nuevo gradlew limpio
         cat > gradlew << 'EOF'
 #!/usr/bin/env bash
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -35,29 +39,58 @@ EOF
         # Hacer ejecutable
         chmod +x gradlew
         
-        # VERIFICAR que no tenga \r
+        # Verificar
         echo "=== Verificando gradlew ==="
         head -n1 gradlew
-        echo "Tamaño: $(wc -l < gradlew) líneas"
-        
-        # Verificar con od (muestra caracteres ocultos)
-        echo "=== Caracteres ocultos (no debe mostrar \r) ==="
-        head -n1 gradlew | od -c | head -5
+        echo "Líneas totales: $(wc -l < gradlew)"
     
-    - name: Download gradle-wrapper.jar
+    - name: Setup Gradle Wrapper
       run: |
+        # Crear directorios si no existen
         mkdir -p gradle/wrapper
+        
+        # Crear gradle-wrapper.properties
+        cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
+        
+        # Descargar gradle-wrapper.jar si no existe
         if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
           echo "Descargando gradle-wrapper.jar..."
-          curl -L -s -o gradle/wrapper/gradle-wrapper.jar \
+          curl -L -o gradle/wrapper/gradle-wrapper.jar \
             https://repo.maven.apache.org/maven2/org/grails/grails-gradle-wrapper/8.2/grails-gradle-wrapper-8.2.jar
         fi
-        ls -lh gradle/wrapper/
+        
+        echo "=== Verificando archivos ==="
+        ls -la gradle/wrapper/
+    
+    - name: Verify Project Structure
+      run: |
+        echo "=== Estructura del proyecto ==="
+        ls -la
+        echo ""
+        echo "=== settings.gradle.kts ==="
+        if [ -f "settings.gradle.kts" ]; then
+          cat settings.gradle.kts
+        else
+          echo "ERROR: settings.gradle.kts no encontrado"
+          exit 1
+        fi
+        echo ""
+        echo "=== app/build.gradle.kts ==="
+        if [ -f "app/build.gradle.kts" ]; then
+          echo "app/build.gradle.kts encontrado"
+        else
+          echo "ERROR: app/build.gradle.kts no encontrado"
+          exit 1
+        fi
     
     - name: Build APK
-      run: |
-        echo "=== Ejecutando Gradle ==="
-        ./gradlew :app:assembleDebug --stacktrace
+      run: ./gradlew :app:assembleDebug --stacktrace
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
