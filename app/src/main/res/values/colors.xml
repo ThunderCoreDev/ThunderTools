@@ -1,24 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Colores principales Battle.net -->
     <color name="electric_blue">#00B4FF</color>
     <color name="dark_blue">#0A0F1F</color>
     <color name="background_dark">#121828</color>
     <color name="surface_dark">#1A1F32</color>
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#B0B3B8</color>
-    
-    <!-- Para el icono de la app -->
-    <color name="ic_launcher_background">#0A0F1F</color>
-    
-    <!-- Estados y utilidades -->
-    <color name="error">#FF5252</color>
-    <color name="success">#4CAF50</color>
-    <color name="warning">#FFC107</color>
-    <color name="info">#2196F3</color>
-    
-    <!-- Sombras y transparencias -->
-    <color name="shadow_dark">#000000</color>
-    <color name="transparent">#00000000</color>
-    <color name="semi_transparent">#80000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray">#808080</color>
 </resources>
