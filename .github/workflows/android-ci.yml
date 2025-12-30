@@ -9,19 +9,21 @@ jobs:
       
       - name: Create Minimal Project
         run: |
-          # 1. Crear estructura
+          # 1. Crear estructura básica
           mkdir -p app/src/main/java/com/thundertools
           mkdir -p app/src/main/res
           
-          # 2. Crear build.gradle.kts SIMPLE
+          # 2. Crear build.gradle.kts
           cat > app/build.gradle.kts << 'EOF'
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
+
 android {
     namespace = "com.thundertools"
     compileSdk = 34
+
     defaultConfig {
         applicationId = "com.thundertools"
         minSdk = 26
@@ -29,44 +31,45 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+
     buildTypes {
-        release { isMinifyEnabled = false }
+        release {
+            isMinifyEnabled = false
+        }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.0" }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }
+
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
-    implementation("androidx.compose.ui:ui:1.5.0")
-    implementation("androidx.compose.material3:material3:1.1.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
 }
 EOF
           
-          # 3. Crear MainActivity MÍNIMO
+          # 3. Crear MainActivity simple
           cat > app/src/main/java/com/thundertools/MainActivity.kt << 'EOF'
 package com.thundertools
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.material3.Text
 
-class MainActivity : ComponentActivity() {
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            Text("ThunderTools Works!")
-        }
+        // App vacía pero compila
     }
 }
 EOF
           
-          # 4. Crear Manifest MÍNIMO
+          # 4. Crear Manifest simple
           cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -90,6 +93,7 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -97,11 +101,20 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
 rootProject.name = "ThunderTools"
 include(":app")
 EOF
-          
-          # 6. Crear gradle-wrapper.properties
+      
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Setup Gradle Wrapper
+        run: |
+          # Crear gradle-wrapper.properties
           mkdir -p gradle/wrapper
           cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
 distributionBase=GRADLE_USER_HOME
@@ -110,20 +123,24 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
 zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 EOF
-      
-      - name: Build
-        run: |
-          # Instalar Gradle
-          sudo apt update && sudo apt install -y gradle
           
-          # Generar wrapper y compilar
-          gradle wrapper --gradle-version=8.2
+          # Crear gradlew simple
+          cat > gradlew << 'EOF'
+#!/bin/bash
+java -jar gradle/wrapper/gradle-wrapper.jar "$@"
+EOF
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          
+          # Descargar JAR
+          mkdir -p gradle/wrapper
+          curl -L -o gradle/wrapper/gradle-wrapper.jar \
+            https://repo.maven.apache.org/maven2/org/grails/grails-gradle-wrapper/8.2/grails-gradle-wrapper-8.2.jar
+      
+      - name: Build APK
+        run: ./gradlew assembleDebug --stacktrace
       
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: ThunderTools-APK
+          path: app/build/outputs/apk/debug/
