@@ -1,26 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tema principal -->
-    <style name="Theme.ThunderTools" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">@color/electric_blue</item>
-        <item name="colorSecondary">@color/dark_blue</item>
+    <!-- Tema principal Battle.net Style -->
+    <style name="Theme.ThunderTools" parent="Theme.Material3.Dark">
         <item name="android:statusBarColor">@color/dark_blue</item>
         <item name="android:navigationBarColor">@color/dark_blue</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:forceDarkAllowed">false</item>
         
-        <!-- Configuración de Splash Screen -->
-        <item name="android:windowSplashScreenBackground">@color/dark_blue</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
-        <item name="android:windowSplashScreenAnimationDuration">500</item>
+        <!-- Colores personalizados -->
+        <item name="colorPrimary">@color/electric_blue</item>
+        <item name="colorSecondary">@color/dark_blue</item>
+        <item name="colorOnPrimary">@color/white</item>
     </style>
     
-    <!-- Tema para Splash Screen -->
-    <style name="Theme.ThunderTools.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/dark_blue</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
-        <item name="windowSplashScreenAnimationDuration">5000</item>
-        <item name="postSplashScreenTheme">@style/Theme.ThunderTools</item>
+    <!-- Tema Splash Screen simplificado -->
+    <style name="Theme.ThunderTools.Splash" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/dark_blue</item>
+        <item name="android:windowFullscreen">true</item>
     </style>
 </resources>
