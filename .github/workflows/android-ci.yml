@@ -25,14 +25,14 @@ jobs:
           fi
 
       - name: Build APK
-        run: |
-          if [ -f "gradlew" ]; then
-            ./gradlew clean assembleDebug
-          else
-            sudo apt-get update
-            sudo apt-get install -y gradle
-            gradle clean assembleDebug
-          fi
+  run: |
+    if [ -f "gradlew" ]; then
+      ./gradlew assembleDebug  # ← ¡SIN 'clean'!
+    else
+      sudo apt-get update
+      sudo apt-get install -y gradle
+      gradle assembleDebug  # ← ¡SIN 'clean'!
+    fi
 
       - name: Find APK file
         id: find-apk
