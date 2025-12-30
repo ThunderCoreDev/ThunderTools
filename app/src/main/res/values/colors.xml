@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Colores principales Battle.net -->
     <color name="electric_blue">#00B4FF</color>
     <color name="dark_blue">#0A0F1F</color>
     <color name="background_dark">#121828</color>
     <color name="surface_dark">#1A1F32</color>
+    
+    <!-- Para el icono de la app -->
+    <color name="ic_launcher_background">#0A0F1F</color>  <!-- ← ¡AGREGA ESTA LÍNEA! -->
     
     <!-- Colores básicos -->
     <color name="white">#FFFFFFFF</color>
