@@ -27,21 +27,21 @@
 PRG="$0"
 # Need this for relative symlinks.
 while [ -h "$PRG" ] ; do
-    ls=`ls -ld "$PRG"`
-    link=`expr "$ls" : '.*-> \(.*\)$'`
+    ls=$(ls -ld "$PRG")
+    link=$(expr "$ls" : '.*-> \(.*\)$')
     if expr "$link" : '/.*' > /dev/null; then
         PRG="$link"
     else
-        PRG=`dirname "$PRG"`"/$link"
+        PRG=$(dirname "$PRG")"/$link"
     fi
 done
-SAVED="`pwd`"
-cd "`dirname \"$PRG\"`/" >/dev/null
-APP_HOME="`pwd -P`"
+SAVED="$(pwd)"
+cd "$(dirname "$PRG")/" >/dev/null
+APP_HOME="$(pwd -P)"
 cd "$SAVED" >/dev/null
 
 APP_NAME="Gradle"
-APP_BASE_NAME=`basename "$0"`
+APP_BASE_NAME=$(basename "$0")
 
 # Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
@@ -65,7 +65,7 @@ cygwin=false
 msys=false
 darwin=false
 nonstop=false
-case "`uname`" in
+case "$(uname)" in
   CYGWIN* )
     cygwin=true
     ;;
@@ -81,7 +81,6 @@ case "`uname`" in
 esac
 
 CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
-
 
 # Determine the Java version to use.
 java_version() {
@@ -101,13 +100,13 @@ java_version "11"
 
 # For Cygwin or MSYS, switch paths to Windows format before running java
 if [ "$cygwin" = "true" ] || [ "$msys" = "true" ] ; then
-    APP_HOME=`cygpath --path --mixed "$APP_HOME"`
-    CLASSPATH=`cygpath --path --mixed "$CLASSPATH"`
+    APP_HOME=$(cygpath --path --mixed "$APP_HOME")
+    CLASSPATH=$(cygpath --path --mixed "$CLASSPATH")
     
-    JAVACMD=`cygpath --unix "$JAVACMD"`
+    JAVACMD=$(cygpath --unix "$JAVACMD")
 
     # We build the pattern for arguments to be converted via cygpath
-    ROOTDIRSRAW=`find -L / -maxdepth 1 -mindepth 1 -type d 2>/dev/null`
+    ROOTDIRSRAW=$(find -L / -maxdepth 1 -mindepth 1 -type d 2>/dev/null)
     SEP=""
     for dir in $ROOTDIRSRAW ; do
         ROOTDIRS="$ROOTDIRS$SEP$dir"
@@ -120,8 +119,8 @@ if [ "$cygwin" = "true" ] || [ "$msys" = "true" ] ; then
     fi
     # Now convert the arguments
     for i do
-        if echo $i | grep -q $OURCYGPATTERN ; then
-            i=`cygpath -w $i`
+        if echo "$i" | grep -q $OURCYGPATTERN ; then
+            i=$(cygpath -w "$i")
         fi
         args="$args \"$i\""
     done
