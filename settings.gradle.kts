@@ -10,9 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") }
     }
 }
 
 rootProject.name = "ThunderTools"
-include(":app")
+include(":app")  # ← ¡ESTA LÍNEA ES CRÍTICA!
