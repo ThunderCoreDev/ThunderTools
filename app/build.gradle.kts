@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.thundertools"
-        minSdk = 26
+        minSdk = 21
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -17,8 +17,7 @@ android {
 
     buildTypes {
         release {
-            // En Kotlin DSL se usa minifyEnabled, no isMinifyEnabled
-            minifyEnabled = false
+            isMinifyEnabled = false
         }
     }
 
