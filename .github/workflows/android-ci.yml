@@ -69,3 +69,38 @@ EOF
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+EOF
+
+          cat <<'EOF' > app/src/main/java/com/thundertools/MainActivity.kt
+package com.thundertools
+
+import android.app.Activity
+import android.os.Bundle
+
+class MainActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+    }
+}
+EOF
+
+          # Gradle wrapper
+          echo 'distributionUrl=https://services.gradle.org/distributions/gradle-8.2-bin.zip' > gradle-wrapper.properties
+          mkdir -p gradle/wrapper
+          mv gradle-wrapper.properties gradle/wrapper/
+
+          sudo apt-get update
+          sudo apt-get install -y gradle
+          gradle wrapper --gradle-version=8.2
+
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: app/build/outputs/apk/debug/*.apk
