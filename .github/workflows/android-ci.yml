@@ -17,12 +17,67 @@ jobs:
       - run: |
           # Crear archivos mínimos
           mkdir -p app/src/main/java/com/thundertools
-          echo 'plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }' > app/build.gradle.kts
-          echo 'android { namespace = "com.thundertools"; compileSdk = 34 }' >> app/build.gradle.kts
-          echo 'dependencies { implementation("androidx.core:core-ktx:1.12.0") }' >> app/build.gradle.kts
           
+          # build.gradle.kts completo
+          cat <<EOF > app/build.gradle.kts
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+
+          android {
+              namespace = "com.thundertools"
+              compileSdk = 34
+
+              defaultConfig {
+                  applicationId = "com.thundertools"
+                  minSdk = 21
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+
+              buildTypes {
+                  release {
+                      minifyEnabled = false
+                  }
+              }
+
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+          }
+
+          dependencies {
+              implementation("androidx.core:core-ktx:1.12.0")
+              implementation("androidx.appcompat:appcompat:1.6.1")
+          }
+          EOF
+          
+          # Clase mínima
           echo 'package com.thundertools' > app/src/main/java/com/thundertools/MainActivity.kt
           echo 'class MainActivity' >> app/src/main/java/com/thundertools/MainActivity.kt
+          
+          # Manifest mínimo
+          mkdir -p app/src/main
+          cat <<EOF > app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.thundertools">
+              <application android:label="ThunderTools">
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
           
           # Crear wrapper
           echo 'distributionUrl=https://services.gradle.org/distributions/gradle-8.2-bin.zip' > gradle-wrapper.properties
