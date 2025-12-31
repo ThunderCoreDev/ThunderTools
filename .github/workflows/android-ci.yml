@@ -18,7 +18,7 @@ jobs:
           # Crear archivos mínimos
           mkdir -p app/src/main/java/com/thundertools
           
-          # build.gradle.kts completo (Kotlin DSL correcto)
+          # build.gradle.kts completo
           cat <<EOF > app/build.gradle.kts
 plugins {
     id("com.android.application")
