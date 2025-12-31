@@ -17,7 +17,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // En Kotlin DSL se usa minifyEnabled, no isMinifyEnabled
+            minifyEnabled = false
         }
     }
 
