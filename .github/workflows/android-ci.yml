@@ -23,15 +23,27 @@ jobs:
         run: |
           mkdir -p app/src/main/java/com/thundertools
           mkdir -p app/src/main/res/layout
-          mkdir -p gradle/wrapper
 
-      - name: Create root build.gradle
+      - name: Create root build.gradle with compatible versions
         run: |
           cat > build.gradle.kts << 'EOF'
           // Top-level build file where you can add configuration options common to all sub-projects/modules.
-          plugins {
-              id("com.android.application") version "8.2.0" apply false
-              id("org.jetbrains.kotlin.android") version "1.9.10" apply false
+          buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath("com.android.tools.build:gradle:8.1.4")
+                  classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
+              }
+          }
+          
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
           }
           
           tasks.register("clean", Delete::class) {
@@ -61,12 +73,12 @@ jobs:
           include(":app")
           EOF
 
-      - name: Create app build.gradle
+      - name: Create app build.gradle with compatible configuration
         run: |
           cat > app/build.gradle.kts << 'EOF'
           plugins {
               id("com.android.application")
-              id("org.jetbrains.kotlin.android")
+              id("kotlin-android")
           }
           
           android {
@@ -79,11 +91,20 @@ jobs:
                   targetSdk = 34
                   versionCode = 1
                   versionName = "1.0"
+                  
+                  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
               }
               
               buildTypes {
+                  getByName("debug") {
+                      isDebuggable = true
+                  }
                   getByName("release") {
                       isMinifyEnabled = false
+                      proguardFiles(
+                          getDefaultProguardFile("proguard-android-optimize.txt"),
+                          "proguard-rules.pro"
+                      )
                   }
               }
               
@@ -95,11 +116,21 @@ jobs:
               kotlinOptions {
                   jvmTarget = "17"
               }
+              
+              buildFeatures {
+                  viewBinding = true
+              }
           }
           
           dependencies {
               implementation("androidx.core:core-ktx:1.12.0")
               implementation("androidx.appcompat:appcompat:1.6.1")
+              implementation("com.google.android.material:material:1.10.0")
+              implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+              
+              testImplementation("junit:junit:4.13.2")
+              androidTestImplementation("androidx.test.ext:junit:1.1.5")
+              androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
           }
           EOF
 
@@ -110,14 +141,19 @@ jobs:
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
               package="com.thundertools">
               
+              <uses-permission android:name="android.permission.INTERNET" />
+              
               <application
                   android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
                   android:label="ThunderTools"
-                  android:theme="@style/Theme.AppCompat.Light">
+                  android:theme="@style/Theme.Material3.Light"
+                  android:usesCleartextTraffic="true">
                   
                   <activity
                       android:name=".MainActivity"
-                      android:exported="true">
+                      android:exported="true"
+                      android:windowSoftInputMode="adjustResize">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
@@ -132,10 +168,10 @@ jobs:
           cat > app/src/main/java/com/thundertools/MainActivity.kt << 'EOF'
           package com.thundertools
           
-          import android.app.Activity
           import android.os.Bundle
+          import androidx.appcompat.app.AppCompatActivity
           
-          class MainActivity : Activity() {
+          class MainActivity : AppCompatActivity() {
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
                   setContentView(R.layout.activity_main)
@@ -145,109 +181,264 @@ jobs:
 
       - name: Create layout file
         run: |
+          mkdir -p app/src/main/res/values
           cat > app/src/main/res/layout/activity_main.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+          <androidx.constraintlayout.widget.ConstraintLayout 
+              xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:gravity="center"
-              android:orientation="vertical">
+              tools:context=".MainActivity">
               
               <TextView
+                  android:id="@+id/textView"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:text="Hello ThunderTools!"
-                  android:textSize="24sp" />
-          </LinearLayout>
+                  android:textSize="24sp"
+                  android:textStyle="bold"
+                  app:layout_constraintBottom_toBottomOf="parent"
+                  app:layout_constraintLeft_toLeftOf="parent"
+                  app:layout_constraintRight_toRightOf="parent"
+                  app:layout_constraintTop_toTopOf="parent" />
+          </androidx.constraintlayout.widget.ConstraintLayout>
           EOF
 
-      - name: Create gradle wrapper properties
+      - name: Create colors.xml
         run: |
+          cat > app/src/main/res/values/colors.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="purple_200">#FFBB86FC</color>
+              <color name="purple_500">#FF6200EE</color>
+              <color name="purple_700">#FF3700B3</color>
+              <color name="teal_200">#FF03DAC5</color>
+              <color name="teal_700">#FF018786</color>
+              <color name="black">#FF000000</color>
+              <color name="white">#FFFFFFFF</color>
+          </resources>
+          EOF
+
+      - name: Create styles.xml
+        run: |
+          cat > app/src/main/res/values/styles.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <!-- Base application theme. -->
+              <style name="Theme.ThunderTools" parent="Theme.Material3.DayNight">
+                  <!-- Primary brand color. -->
+                  <item name="colorPrimary">@color/purple_500</item>
+                  <item name="colorPrimaryVariant">@color/purple_700</item>
+                  <item name="colorOnPrimary">@color/white</item>
+                  <!-- Secondary brand color. -->
+                  <item name="colorSecondary">@color/teal_200</item>
+                  <item name="colorSecondaryVariant">@color/teal_700</item>
+                  <item name="colorOnSecondary">@color/black</item>
+                  <!-- Status bar color. -->
+                  <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+                  <!-- Customize your theme here. -->
+              </style>
+          </resources>
+          EOF
+
+      - name: Create proguard-rules.pro
+        run: |
+          cat > app/proguard-rules.pro << 'EOF'
+          # Add project specific ProGuard rules here.
+          # You can control the set of applied configuration files using the
+          # proguardFiles setting in build.gradle.
+          #
+          # For more details, see
+          #   http://developer.android.com/guide/developing/tools/proguard.html
+          
+          # If your project uses WebView with JS, uncomment the following
+          # and specify the fully qualified class name to the JavaScript interface
+          # class:
+          #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+          #   public *;
+          #}
+          
+          # Uncomment this to preserve the line number information for
+          # debugging stack traces.
+          #-keepattributes SourceFile,LineNumberTable
+          
+          # If you keep the line number information, uncomment this to
+          # hide the original source file name.
+          #-renamesourcefileattribute SourceFile
+          EOF
+
+      - name: Create gradle wrapper properties with compatible version
+        run: |
+          mkdir -p gradle/wrapper
           cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
           distributionBase=GRADLE_USER_HOME
           distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.2.1-bin.zip
           zipStoreBase=GRADLE_USER_HOME
           zipStorePath=wrapper/dists
           EOF
 
-      - name: Download gradle wrapper
+      - name: Create local.properties
         run: |
-          wget -q https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar -O gradle/wrapper/gradle-wrapper.jar
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-      - name: Setup Gradle Wrapper (Simplified)
+      - name: Setup Gradle wrapper
         run: |
-          # Crear un gradlew simplificado sin problemas de comillas
+          # Download gradle wrapper jar
+          wget -q https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar -O gradle/wrapper/gradle-wrapper.jar
+          
+          # Create simple gradlew script
           cat > gradlew << 'EOF'
           #!/usr/bin/env bash
           
-          set -e
+          ##############################################################################
+          ##
+          ##  Gradle start up script for UN*X
+          ##
+          ##############################################################################
           
-          # Resolve links
-          SCRIPT="$0"
-          while [ -h "$SCRIPT" ] ; do
-            ls=`ls -ld "$SCRIPT"`
-            link=`expr "$ls" : '.*-> \(.*\)$'`
-            if expr "$link" : '/.*' > /dev/null; then
-              SCRIPT="$link"
-            else
-              SCRIPT=`dirname "$SCRIPT"`/"$link"
-            fi
-          done
+          # Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
+          DEFAULT_JVM_OPTS=""
           
-          SAVED="`pwd`"
-          cd "`dirname \"$SCRIPT\"`/" >/dev/null
-          APP_HOME="`pwd -P`"
-          cd "$SAVED" >/dev/null
+          # Use the maximum available, or set MAX_FD != -1 to use that value.
+          MAX_FD="maximum"
           
-          CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+          warn () {
+              echo "$*"
+          }
           
-          # Use Java from JAVA_HOME if available
+          die () {
+              echo
+              echo "$*"
+              echo
+              exit 1
+          }
+          
+          # OS specific support (must be 'true' or 'false').
+          cygwin=false
+          msys=false
+          darwin=false
+          nonstop=false
+          case "`uname`" in
+            CYGWIN* )
+              cygwin=true
+              ;;
+            Darwin* )
+              darwin=true
+              ;;
+            MINGW* )
+              msys=true
+              ;;
+            NONSTOP* )
+              nonstop=true
+              ;;
+          esac
+          
+          # Determine the Java command to use to start the JVM.
           if [ -n "$JAVA_HOME" ] ; then
-            JAVACMD="$JAVA_HOME/bin/java"
+              if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+                  # IBM's JDK on AIX uses strange locations for the executables
+                  JAVACMD="$JAVA_HOME/jre/sh/java"
+              else
+                  JAVACMD="$JAVA_HOME/bin/java"
+              fi
+              if [ ! -x "$JAVACMD" ] ; then
+                  die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
+          
+          Please set the JAVA_HOME variable in your environment to match the
+          location of your Java installation."
+              fi
           else
-            JAVACMD=java
+              JAVACMD="java"
+              which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+          
+          Please set the JAVA_HOME variable in your environment to match the
+          location of your Java installation."
           fi
           
-          # Execute Gradle
-          exec "$JAVACMD" \
-            -Dorg.gradle.appname=gradlew \
-            -classpath "$CLASSPATH" \
-            org.gradle.wrapper.GradleWrapperMain \
-            "$@"
+          # Increase the maximum file descriptors if we can.
+          if [ "$cygwin" = "false" -a "$darwin" = "false" -a "$nonstop" = "false" ] ; then
+              MAX_FD_LIMIT=`ulimit -H -n`
+              if [ $? -eq 0 ] ; then
+                  if [ "$MAX_FD" = "maximum" -o "$MAX_FD" = "max" ] ; then
+                      MAX_FD="$MAX_FD_LIMIT"
+                  fi
+                  ulimit -n $MAX_FD
+                  if [ $? -ne 0 ] ; then
+                      warn "Could not set maximum file descriptor limit: $MAX_FD"
+                  fi
+              else
+                  warn "Could not query maximum file descriptor limit: $MAX_FD_LIMIT"
+              fi
+          fi
+          
+          # For Darwin, add options to specify how the application appears in the dock
+          if $darwin; then
+              GRADLE_OPTS="$GRADLE_OPTS \"-Xdock:name=$APP_NAME\" \"-Xdock:icon=$APP_HOME/media/gradle.icns\""
+          fi
+          
+          # For Cygwin, switch paths to Windows format before running java
+          if $cygwin ; then
+              APP_HOME=`cygpath --path --mixed "$APP_HOME"`
+              CLASSPATH=`cygpath --path --mixed "$CLASSPATH"`
+              JAVACMD=`cygpath --unix "$JAVACMD"`
+          
+              # We build the pattern for arguments to be converted via cygpath
+              ROOTDIRSRAW=`find -L / -maxdepth 1 -mindepth 1 -type d 2>/dev/null`
+              SEP=""
+              for dir in $ROOTDIRSRAW ; do
+                  ROOTDIRS="$ROOTDIRS$SEP$dir"
+                  SEP="|"
+              done
+              OURCYGPATTERN="(^($ROOTDIRS))"
+              # Add a user-defined pattern to the cygpath arguments
+              if [ "$GRADLE_CYGPATTERN" != "" ] ; then
+                  OURCYGPATTERN="$OURCYGPATTERN|($GRADLE_CYGPATTERN)"
+              fi
+              # Now convert the arguments
+              for i in $@ ; do
+                  check=`echo "$i"|grep -E -c "$OURCYGPATTERN" -`
+                  check2=`echo "$i"|grep -E -c "^-"`                                 ### Check if argument is an option
+                  if [ $check -ne 0 ] && [ $check2 -eq 0 ] ; then                    ### Added a condition
+                      i=`cygpath --path --ignore --mixed "$i"`
+                  fi
+                  NEWARGS="$NEWARGS $i"
+              done
+              # Roll the args list around exactly as many times as the number of
+              # args, so each arg winds up back in the position where it started.
+              for i in $NEWARGS ; do
+                  shift
+              done
+          fi
+          
+          # Collect all arguments for the java command;
+          #   * $DEFAULT_JVM_OPTS, $JAVA_OPTS, and $GRADLE_OPTS can contain fragments of
+          #     shell script including quotes and variable substitutions, so don't split them.
+          #   * Build the classpath from the app classpath variable (CP) and the wrapper jar.
+          #   * For Cygwin, convert paths from 'mixed' (posix separator) to Windows style.
+          set -- $DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS "-classpath" "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+          
+          exec "$JAVACMD" "$@"
           EOF
           
           chmod +x gradlew
 
-      - name: Create local.properties for Android SDK
+      - name: Build APK
         run: |
-          # Crear local.properties con la ruta del SDK de Android
-          if [ -n "$ANDROID_HOME" ]; then
-            echo "sdk.dir=$ANDROID_HOME" > local.properties
-          else
-            echo "sdk.dir=$HOME/Android/Sdk" > local.properties
-          fi
-
-      - name: Install Gradle wrapper properly
-        run: |
-          # Usar gradle wrapper oficial si es posible
-          if ! command -v gradle &> /dev/null; then
-            wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
-            unzip -q gradle-8.2-bin.zip
-            export PATH="$PWD/gradle-8.2/bin:$PATH"
+          # Set Android SDK path if not set
+          if [ -z "$ANDROID_HOME" ]; then
+            export ANDROID_HOME="$HOME/Android/Sdk"
           fi
           
-          # Crear el wrapper usando gradle
-          gradle wrapper --gradle-version=8.2 --distribution-type=bin
-
-      - name: Build APK with Gradle
-        run: |
-          # Dar permisos al wrapper
-          chmod +x gradlew
-          
-          # Limpiar y construir
-          ./gradlew clean
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          # Build with compatible settings
+          ./gradlew clean assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            --warning-mode=none \
+            -Pandroid.debug.obsoleteApi=true \
+            -Pkotlin.compiler.execution.strategy="in-process"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
