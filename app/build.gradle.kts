@@ -15,11 +15,12 @@ android {
         versionName = "1.0"
     }
 
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
+    // Puedes quitar buildTypes si no necesitas personalizar nada
+    // buildTypes {
+    //     getByName("release") {
+    //         isMinifyEnabled = false
+    //     }
+    // }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
