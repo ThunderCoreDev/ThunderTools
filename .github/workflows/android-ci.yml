@@ -16,89 +16,132 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Generate project and build
         run: |
+          # Crear estructura de directorios
           mkdir -p app/src/main/java/com/thundertools
-          mkdir -p app/src/main
-
-          cat <<'EOF' > app/build.gradle.kts
-plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-}
-
-android {
-    namespace = "com.thundertools"
-    compileSdk = 34
-
-    defaultConfig {
-        applicationId = "com.thundertools"
-        minSdk = 21
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
-    }
-
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-}
-
-dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-}
-EOF
-
-          cat <<'EOF' > app/src/main/AndroidManifest.xml
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.thundertools">
-    <application android:label="ThunderTools">
-        <activity android:name=".MainActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-EOF
-
-          cat <<'EOF' > app/src/main/java/com/thundertools/MainActivity.kt
-package com.thundertools
-
-import android.app.Activity
-import android.os.Bundle
-
-class MainActivity : Activity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-}
-EOF
-
-          # Gradle wrapper
-          echo 'distributionUrl=https://services.gradle.org/distributions/gradle-8.2-bin.zip' > gradle-wrapper.properties
+          mkdir -p app/src/test
           mkdir -p gradle/wrapper
-          mv gradle-wrapper.properties gradle/wrapper/
 
-          sudo apt-get update
-          sudo apt-get install -y gradle
-          gradle wrapper --gradle-version=8.2
+          # Crear build.gradle.kts
+          cat > app/build.gradle.kts << 'EOF'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
 
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          android {
+              namespace = "com.thundertools"
+              compileSdk = 34
+
+              defaultConfig {
+                  applicationId = "com.thundertools"
+                  minSdk = 21
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+
+              buildTypes {
+                  getByName("release") {
+                      isMinifyEnabled = false
+                  }
+              }
+
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+          }
+
+          dependencies {
+              implementation("androidx.core:core-ktx:1.12.0")
+              implementation("androidx.appcompat:appcompat:1.6.1")
+          }
+          EOF
+
+          # Crear AndroidManifest.xml
+          cat > app/src/main/AndroidManifest.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.thundertools">
+              <application android:label="ThunderTools">
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          # Crear MainActivity.kt
+          cat > app/src/main/java/com/thundertools/MainActivity.kt << 'EOF'
+          package com.thundertools
+
+          import android.app.Activity
+          import android.os.Bundle
+
+          class MainActivity : Activity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+              }
+          }
+          EOF
+
+          # Crear build.gradle.kts raíz
+          cat > build.gradle.kts << 'EOF'
+          plugins {
+              id("com.android.application") version "8.2.0" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.10" apply false
+          }
+
+          tasks.register("clean", Delete::class) {
+              delete(rootProject.buildDir)
+          }
+          EOF
+
+          # Crear settings.gradle.kts
+          cat > settings.gradle.kts << 'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+
+          rootProject.name = "ThunderTools"
+          include(":app")
+          EOF
+
+          # Crear gradle wrapper
+          cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          EOF
+
+          # Dar permisos y construir
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
