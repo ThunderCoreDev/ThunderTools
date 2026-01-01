@@ -39,7 +39,7 @@ jobs:
 
               buildTypes {
                   release {
-                      IsMinifyEnabled = false
+                      isMinifyEnabled = false
                   }
               }
 
