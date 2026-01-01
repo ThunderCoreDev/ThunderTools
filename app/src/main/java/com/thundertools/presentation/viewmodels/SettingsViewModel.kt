@@ -3,9 +3,7 @@ package com.thundertools.presentation.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.thundertools.data.local.database.repositories.ServerRepository
-import com.thundertools.data.models.DatabaseConfig
-import com.thundertools.data.models.EmuType
-import com.thundertools.data.models.Expansion
+import com.thundertools.data.models.*  // Importar todos los modelos
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -52,19 +50,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
     
-    data class ServerProfileState(
-        val id: Int = 0,
-        val name: String = "Mi Servidor",
-        val host: String = "localhost",
-        val port: Int = 8085,
-        val emulatorType: EmuType = EmuType.AZEROTHCORE,
-        val expansion: Expansion = Expansion.WOTLK,
-        val authConfig: DatabaseConfig = DatabaseConfig(database = "auth"),
-        val charactersConfig: DatabaseConfig = DatabaseConfig(database = "characters"),
-        val worldConfig: DatabaseConfig = DatabaseConfig(database = "world"),
-        val isDefault: Boolean = true
-    )
-    
+    // Función para convertir de State a Entity
     private fun ServerProfileState.toEntity() = com.thundertools.data.local.database.entities.ServerProfile(
         id = id,
         name = name,
@@ -78,6 +64,7 @@ class SettingsViewModel @Inject constructor(
         isDefault = isDefault
     )
     
+    // Función para convertir de Entity a State
     private fun com.thundertools.data.local.database.entities.ServerProfile.toState() = ServerProfileState(
         id = id,
         name = name,
