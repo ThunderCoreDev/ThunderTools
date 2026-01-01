@@ -1,13 +1,16 @@
 package com.thundertools
 
-import android.app.Application
-import dagger.hilt.android.HiltAndroidApp
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import dagger.hilt.android.AndroidEntryPoint
 
-@HiltAndroidApp  // <- IMPORTANTE: Esto falta
-class ThunderToolsApp : Application() {
-    override fun onCreate() {
-        super.onCreate()
-        // Inicializar Room Database
-        AppDatabase.init(this)
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            // ... tu contenido
+        }
     }
 }
