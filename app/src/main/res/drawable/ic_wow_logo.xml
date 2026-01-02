@@ -5,7 +5,7 @@
     android:viewportWidth="140"
     android:viewportHeight="140">
     
-    <!-- WoW completo estilo BattleNet - VERSIÓN CORREGIDA -->
+    <!-- WoW estilo BattleNet - SIN ERRORES -->
     <group>
         <!-- Letra W -->
         <path
@@ -17,19 +17,19 @@
             android:strokeLineCap="round"
             android:strokeLineJoin="round" />
             
-        <!-- Letra O (primera) - CIRCULO como path -->
+        <!-- Letra O (primera) -->
         <path
             android:name="letter_o1"
-            android:fillColor="#00000000"  <!-- En lugar de transparent -->
+            android:fillColor="#00000000"
             android:pathData="M90,55 a15,15 0 1,1 0,30 a15,15 0 1,1 0,-30"
             android:strokeColor="#00B4FF"
             android:strokeWidth="8"
             android:strokeLineCap="round" />
             
-        <!-- Letra O (segunda) - CIRCULO como path -->
+        <!-- Letra O (segunda) -->
         <path
             android:name="letter_o2"
-            android:fillColor="#00000000"  <!-- En lugar de transparent -->
+            android:fillColor="#00000000"
             android:pathData="M120,55 a15,15 0 1,1 0,30 a15,15 0 1,1 0,-30"
             android:strokeColor="#00B4FF"
             android:strokeWidth="8"
@@ -54,7 +54,7 @@
             android:strokeLineCap="round"
             android:strokeAlpha="0.7" />
             
-        <!-- Detalle interior O1 - CIRCULO pequeño como path -->
+        <!-- Detalle interior O1 -->
         <path
             android:name="o1_detail"
             android:fillColor="#00B4FF"
@@ -63,7 +63,7 @@
             android:strokeWidth="4"
             android:strokeLineCap="round" />
             
-        <!-- Detalle interior O2 - CIRCULO pequeño como path -->
+        <!-- Detalle interior O2 -->
         <path
             android:name="o2_detail"
             android:fillColor="#00B4FF"
