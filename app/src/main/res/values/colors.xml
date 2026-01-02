@@ -1,33 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- ========== PALETA BATTLE.NET OFICIAL ========== -->
+    <!-- ========== COLORES BATTLE.NET (los que faltan) ========== -->
+    <color name="battlenet_dark_blue">#0A1428</color>
+    <color name="battlenet_medium_blue">#132347</color>
+    <color name="battlenet_light_blue">#1A3563</color>
+    <color name="battlenet_electric_blue">#00B4FF</color>
+    <color name="battlenet_electric_blue_light">#33C3FF</color>
+    
+    <!-- ========== COLORES BATTLE.NET OFICIAL ========== -->
     <!-- Colores principales BattleNet -->
-    <color name="battlenet_primary_dark">#0A1428</color>           <!-- Azul noche principal -->
-    <color name="battlenet_primary_medium">#132347</color>        <!-- Azul medio -->
-    <color name="battlenet_primary_light">#1A3563</color>         <!-- Azul claro -->
+    <color name="battlenet_primary_dark">#0A1428</color>
+    <color name="battlenet_primary_medium">#132347</color>
+    <color name="battlenet_primary_light">#1A3563</color>
     
     <!-- Azules eléctricos BattleNet -->
-    <color name="battlenet_electric_dark">#0088CC</color>         <!-- Azul eléctrico oscuro -->
-    <color name="battlenet_electric">#00B4FF</color>              <!-- Azul eléctrico principal -->
-    <color name="battlenet_electric_light">#33C3FF</color>        <!-- Azul eléctrico claro -->
-    <color name="battlenet_electric_glow">#66D2FF</color>         <!-- Azul eléctrico brillo -->
+    <color name="battlenet_electric_dark">#0088CC</color>
+    <color name="battlenet_electric">#00B4FF</color>
+    <color name="battlenet_electric_light">#33C3FF</color>
+    <color name="battlenet_electric_glow">#66D2FF</color>
     
     <!-- Acentos BattleNet -->
-    <color name="battlenet_accent_gold">#FFD100</color>           <!-- Dorado BattleNet -->
-    <color name="battlenet_accent_gold_light">#FFE066</color>     <!-- Dorado claro -->
-    <color name="battlenet_accent_silver">#C0C0C0</color>         <!-- Plateado -->
+    <color name="battlenet_accent_gold">#FFD100</color>
+    <color name="battlenet_accent_gold_light">#FFE066</color>
+    <color name="battlenet_accent_silver">#C0C0C0</color>
     
     <!-- Colores de texto -->
-    <color name="battlenet_text_primary">#FFFFFF</color>          <!-- Texto principal -->
-    <color name="battlenet_text_secondary">#CCCCCC</color>        <!-- Texto secundario -->
-    <color name="battlenet_text_disabled">#888888</color>         <!-- Texto deshabilitado -->
-    <color name="battlenet_text_accent">#00B4FF</color>           <!-- Texto acento -->
+    <color name="battlenet_text_primary">#FFFFFF</color>
+    <color name="battlenet_text_secondary">#CCCCCC</color>
+    <color name="battlenet_text_disabled">#888888</color>
+    <color name="battlenet_text_accent">#00B4FF</color>
     
     <!-- Elementos UI -->
-    <color name="battlenet_divider">#1A3563</color>               <!-- Divisores -->
-    <color name="battlenet_border">#2A4A80</color>                <!-- Bordes -->
-    <color name="battlenet_overlay">#1A356388</color>             <!-- Overlay semi-transparente -->
-    <color name="battlenet_shadow">#0A1428CC</color>              <!-- Sombra -->
+    <color name="battlenet_divider">#1A3563</color>
+    <color name="battlenet_border">#2A4A80</color>
+    <color name="battlenet_overlay">#1A356388</color>
+    <color name="battlenet_shadow">#0A1428CC</color>
     
     <!-- ========== COLORES PARA EL ICONO ========== -->
     <!-- Opción 1: Fondo oscuro BattleNet -->
@@ -38,40 +45,40 @@
     <color name="ic_launcher_gradient_end">#1A3563</color>
     
     <!-- Colores para el icono -->
-    <color name="icon_w_color">#FFFFFF</color>                    <!-- Color de la W -->
-    <color name="icon_lightning_color">#00B4FF</color>            <!-- Color del rayo -->
-    <color name="icon_glow_color">#33C3FF</color>                 <!-- Color del brillo -->
-    <color name="icon_shadow_color">#0A1428</color>               <!-- Color de sombra -->
-    <color name="icon_border_color">#2A4A80</color>               <!-- Color del borde -->
+    <color name="icon_w_color">#FFFFFF</color>
+    <color name="icon_lightning_color">#00B4FF</color>
+    <color name="icon_glow_color">#33C3FF</color>
+    <color name="icon_shadow_color">#0A1428</color>
+    <color name="icon_border_color">#2A4A80</color>
     
     <!-- ========== ESTADOS ========== -->
-    <color name="status_online">#00FF00</color>                   <!-- Verde online -->
-    <color name="status_offline">#FF0000</color>                  <!-- Rojo offline -->
-    <color name="status_loading">#00B4FF</color>                  <!-- Azul cargando -->
+    <color name="status_online">#00FF00</color>
+    <color name="status_offline">#FF0000</color>
+    <color name="status_loading">#00B4FF</color>
     
     <!-- ========== BOTONES ========== -->
-    <color name="button_primary">#00B4FF</color>                  <!-- Botón principal azul -->
-    <color name="button_primary_pressed">#0088CC</color>          <!-- Botón presionado -->
-    <color name="button_secondary">#132347</color>                <!-- Botón secundario -->
-    <color name="button_disabled">#1A3563</color>                 <!-- Botón deshabilitado -->
-    <color name="button_text">#FFFFFF</color>                     <!-- Texto botón -->
+    <color name="button_primary">#00B4FF</color>
+    <color name="button_primary_pressed">#0088CC</color>
+    <color name="button_secondary">#132347</color>
+    <color name="button_disabled">#1A3563</color>
+    <color name="button_text">#FFFFFF</color>
     
     <!-- ========== DIÁLOGOS Y MENÚS ========== -->
-    <color name="dialog_background">#0A1428</color>               <!-- Fondo diálogos -->
-    <color name="dialog_surface">#132347</color>                  <!-- Superficie diálogos -->
-    <color name="menu_background">#0A1428E6</color>               <!-- Fondo menú (semi-transparente) -->
-    <color name="menu_item_background">#1A3563</color>            <!-- Fondo ítem menú -->
+    <color name="dialog_background">#0A1428</color>
+    <color name="dialog_surface">#132347</color>
+    <color name="menu_background">#0A1428E6</color>
+    <color name="menu_item_background">#1A3563</color>
     
     <!-- ========== BARRAS ========== -->
-    <color name="progress_bar">#00B4FF</color>                    <!-- Barra de progreso -->
-    <color name="progress_background">#1A3563</color>             <!-- Fondo barra progreso -->
-    <color name="navigation_bar">#0A1428</color>                  <!-- Barra navegación -->
+    <color name="progress_bar">#00B4FF</color>
+    <color name="progress_background">#1A3563</color>
+    <color name="navigation_bar">#0A1428</color>
     
     <!-- ========== MODO OSCURO/CLARO ========== -->
-    <color name="dark_surface">#0A1428</color>                    <!-- Superficie modo oscuro -->
-    <color name="dark_background">#050A14</color>                 <!-- Fondo modo oscuro -->
-    <color name="light_surface">#F5F5F5</color>                   <!-- Superficie modo claro -->
-    <color name="light_background">#FFFFFF</color>                <!-- Fondo modo claro -->
+    <color name="dark_surface">#0A1428</color>
+    <color name="dark_background">#050A14</color>
+    <color name="light_surface">#F5F5F5</color>
+    <color name="light_background">#FFFFFF</color>
     
     <!-- ========== COLORES DEL SISTEMA (Mantener compatibilidad) ========== -->
     <color name="purple_200">#FFBB86FC</color>
@@ -83,26 +90,26 @@
     <color name="white">#FFFFFFFF</color>
     
     <!-- ========== COLORES ESPECÍFICOS THUNDERNET ========== -->
-    <color name="thundernet_primary">#00B4FF</color>              <!-- Azul ThunderNet -->
-    <color name="thundernet_secondary">#0A1428</color>            <!-- Azul oscuro ThunderNet -->
-    <color name="thundernet_accent">#FFD100</color>               <!-- Dorado ThunderNet -->
-    <color name="thundernet_glow">#33C3FF</color>                 <!-- Brillos azules -->
+    <color name="thundernet_primary">#00B4FF</color>
+    <color name="thundernet_secondary">#0A1428</color>
+    <color name="thundernet_accent">#FFD100</color>
+    <color name="thundernet_glow">#33C3FF</color>
     
     <!-- ========== COLORES PARA WEBSOCKET/ESTADOS ========== -->
-    <color name="wow_realm_online">#4CAF50</color>                <!-- Verde WoW online -->
-    <color name="wow_realm_offline">#F44336</color>               <!-- Rojo WoW offline -->
-    <color name="wow_realm_high_pop">#FF9800</color>              <!-- Naranja población alta -->
-    <color name="wow_realm_full">#F44336</color>                  <!-- Rojo reino lleno -->
-    <color name="wow_realm_low_pop">#8BC34A</color>               <!-- Verde claro población baja -->
+    <color name="wow_realm_online">#4CAF50</color>
+    <color name="wow_realm_offline">#F44336</color>
+    <color name="wow_realm_high_pop">#FF9800</color>
+    <color name="wow_realm_full">#F44336</color>
+    <color name="wow_realm_low_pop">#8BC34A</color>
     
     <!-- ========== EFECTOS ESPECIALES ========== -->
-    <color name="effect_glow">#33C3FF40</color>                   <!-- Brillo efecto (transparente) -->
-    <color name="effect_shadow">#0A142880</color>                 <!-- Sombra efecto -->
-    <color name="effect_highlight">#FFFFFF20</color>              <!-- Resaltado suave -->
+    <color name="effect_glow">#33C3FF40</color>
+    <color name="effect_shadow">#0A142880</color>
+    <color name="effect_highlight">#FFFFFF20</color>
     
     <!-- ========== COLORES DE SEGURIDAD ========== -->
-    <color name="security_safe">#4CAF50</color>                   <!-- Seguro/verificado -->
-    <color name="security_warning">#FF9800</color>                <!-- Advertencia -->
-    <color name="security_danger">#F44336</color>                 <!-- Peligro/error -->
-    <color name="security_info">#00B4FF</color>                   <!-- Información -->
+    <color name="security_safe">#4CAF50</color>
+    <color name="security_warning">#FF9800</color>
+    <color name="security_danger">#F44336</color>
+    <color name="security_info">#00B4FF</color>
 </resources>
