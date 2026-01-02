@@ -9,13 +9,12 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     
     <!-- Para almacenamiento de cookies en versiones antiguas -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+    <uses-permission 
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
         android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
+    <uses-permission 
+        android:name="android.permission.READ_EXTERNAL_STORAGE" 
         android:maxSdkVersion="28" />
-    
-    <!-- Para mejor rendimiento gráfico en WebView -->
-    <uses-feature android:name="android.hardware.touchscreen" android:required="true" />
     
     <application
         android:allowBackup="true"
@@ -25,8 +24,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ThunderNetWeb"
         android:usesCleartextTraffic="true"
-        android:hardwareAccelerated="true" <!-- AÑADIDO: Mejor rendimiento WebView -->
         android:networkSecurityConfig="@xml/network_security_config"
+        android:hardwareAccelerated="true"
         tools:targetApi="31">
         
         <!-- ACTIVIDAD PRINCIPAL -->
@@ -36,8 +35,8 @@
             android:launchMode="singleTop"
             android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|screenLayout|uiMode"
             android:windowSoftInputMode="adjustResize"
-            android:hardwareAccelerated="true" <!-- AÑADIDO: Hardware acceleration específico -->
-            android:screenOrientation="portrait" <!-- RECOMENDADO: Fijar vertical -->
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.ThunderNetWeb.NoActionBar">
             
             <!-- INTENT FILTER PARA EL LAUNCHER -->
