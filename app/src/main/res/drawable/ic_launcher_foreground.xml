@@ -5,47 +5,45 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- Fondo cuadrado azul oscuro estilo Blizzard -->
+    <!-- FONDO DEGRADADO BATTLE.NET -->
     <path
-        android:fillColor="#0A0F1F"
-        android:pathData="M24,0L84,0A24,24 0,0 1,108 24L108,84A24,24 0,0 1,84 108L24,108A24,24 0,0 1,0 84L0,24A24,24 0,0 1,24 0z" />
+        android:fillColor="#FF0A1428"
+        android:pathData="M0,0h108v108h-108z" />
     
-    <!-- Borde azul eléctrico sutil -->
+    <!-- W BATTLE.NET STYLE - DISEÑO ICÓNICO -->
     <path
-        android:fillColor="#00B4FF"
-        android:fillAlpha="0.3"
-        android:pathData="M24,4L84,4A20,20 0,0 1,104 24L104,84A20,20 0,0 1,84 104L24,104A20,20 0,0 1,4 84L4,24A20,20 0,0 1,24 4z"
-        android:strokeWidth="2"
-        android:strokeColor="#00B4FF" />
+        android:fillColor="#FF00AEFF"
+        android:pathData="M22,28 
+                         C22,28 35,72 44,48 
+                         C44,48 53,72 64,48 
+                         C64,48 73,72 86,28 
+                         L78,28 
+                         C78,28 68,62 64,48 
+                         C64,48 60,62 50,28 
+                         C50,28 40,62 32,28 
+                         Z" />
     
-    <!-- Letra T izquierda -->
+    <!-- REFLEJO/BRILO SUPERIOR -->
     <path
-        android:fillColor="#00B4FF"
-        android:pathData="M25,40 L25,70 L35,70 L35,50 L45,50 L45,40 Z" />
+        android:fillColor="#FF4DC8FF"
+        android:fillAlpha="0.4"
+        android:pathData="M25,30 
+                         C25,30 36,68 43,50 
+                         C43,50 51,68 61,50 
+                         C61,50 68,68 80,30 
+                         L73,30 
+                         C73,30 65,60 61,50 
+                         C61,50 57,60 48,30 
+                         C48,30 39,60 33,30 
+                         Z" />
     
-    <!-- Rayo azul eléctrico con sombra -->
-    <group>
-        <!-- Sombra del rayo -->
-        <path
-            android:fillColor="#0066CC"
-            android:pathData="M50,30 L58,42 L54,42 L62,70 L70,70 L62,42 L66,42 L58,30 Z"
-            android:translateX="1"
-            android:translateY="1" />
+    <!-- BORDE DE LUZ AZUL -->
+    <path
+        android:strokeColor="#FF148EFF"
+        android:strokeWidth="1"
+        android:fillColor="#00000000"
+        android:pathData="M15,15 
+                         C15,15 15,93 93,93 
+                         C93,93 93,15 15,15" />
         
-        <!-- Rayo principal -->
-        <path
-            android:fillColor="#00B4FF"
-            android:pathData="M50,30 L58,42 L54,42 L62,70 L70,70 L62,42 L66,42 L58,30 Z" />
-    </group>
-    
-    <!-- Letra T derecha -->
-    <path
-        android:fillColor="#00B4FF"
-        android:pathData="M75,40 L75,70 L85,70 L85,50 L95,50 L95,40 Z" />
-    
-    <!-- Efecto de brillo en el rayo -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillAlpha="0.3"
-        android:pathData="M52,32 L56,38 L53,38 L58,58 L65,58 L60,38 L63,38 L58,32 Z" />
 </vector>

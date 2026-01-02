@@ -1,9 +1,16 @@
-#!/usr/bin/env bash
-# ThunderTools Gradle Wrapper - Linux/Mac
-BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
-WRAPPER_JAR="$BASE_DIR/gradle/wrapper/gradle-wrapper.jar"
-if [ ! -f "$WRAPPER_JAR" ]; then
-    echo "ERROR: gradle-wrapper.jar not found at $WRAPPER_JAR"
+cat > gradlew << 'EOF'
+#!/bin/bash
+
+# Gradle Wrapper SIMPLIFICADO
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+JAR="$DIR/gradle/wrapper/gradle-wrapper.jar"
+
+if [ ! -f "$JAR" ]; then
+    echo "ERROR: No se encontró $JAR"
     exit 1
 fi
-exec java -jar "$WRAPPER_JAR" "$@"
+
+exec java -jar "$JAR" "$@"
+EOF
+
+chmod +x gradlew

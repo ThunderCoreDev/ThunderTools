@@ -1,28 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.thundertools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.thundernet.web">
 
-    <!-- Permisos básicos -->
+    <!-- Permisos para cookies y almacenamiento -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    
+    <!-- Para almacenamiento de cookies en versiones antiguas -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="28" />
+    
+    <!-- Para mejor rendimiento gráfico en WebView -->
+    <uses-feature android:name="android.hardware.touchscreen" android:required="true" />
+    
     <application
-        android:name=".ThunderToolsApp"
         android:allowBackup="true"
-        android:icon="@android:drawable/ic_menu_info_details"
-        android:label="ThunderTools"
-        android:theme="@android:style/Theme.Material.Light"
-        android:supportsRtl="true">
-
+        android:icon="@mipmap/ic_launcher"
+        android:label="ThunderNet"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ThunderNetWeb"
+        android:usesCleartextTraffic="true"
+        android:hardwareAccelerated="true" <!-- AÑADIDO: Mejor rendimiento WebView -->
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:targetApi="31">
+        
+        <!-- ACTIVIDAD PRINCIPAL -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            android:launchMode="singleTop"
+            android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|screenLayout|uiMode"
+            android:windowSoftInputMode="adjustResize"
+            android:hardwareAccelerated="true" <!-- AÑADIDO: Hardware acceleration específico -->
+            android:screenOrientation="portrait" <!-- RECOMENDADO: Fijar vertical -->
+            android:theme="@style/Theme.ThunderNetWeb.NoActionBar">
+            
+            <!-- INTENT FILTER PARA EL LAUNCHER -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            
+            <!-- Para manejar enlaces web si es necesario -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
         </activity>
-
+        
     </application>
+
 </manifest>
