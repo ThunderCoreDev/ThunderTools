@@ -5,45 +5,122 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- FONDO DEGRADADO BATTLE.NET -->
-    <path
-        android:fillColor="#FF0A1428"
-        android:pathData="M0,0h108v108h-108z" />
-    
-    <!-- W BATTLE.NET STYLE - DISEÑO ICÓNICO -->
-    <path
-        android:fillColor="#FF00AEFF"
-        android:pathData="M22,28 
-                         C22,28 35,72 44,48 
-                         C44,48 53,72 64,48 
-                         C64,48 73,72 86,28 
-                         L78,28 
-                         C78,28 68,62 64,48 
-                         C64,48 60,62 50,28 
-                         C50,28 40,62 32,28 
-                         Z" />
-    
-    <!-- REFLEJO/BRILO SUPERIOR -->
-    <path
-        android:fillColor="#FF4DC8FF"
-        android:fillAlpha="0.4"
-        android:pathData="M25,30 
-                         C25,30 36,68 43,50 
-                         C43,50 51,68 61,50 
-                         C61,50 68,68 80,30 
-                         L73,30 
-                         C73,30 65,60 61,50 
-                         C61,50 57,60 48,30 
-                         C48,30 39,60 33,30 
-                         Z" />
-    
-    <!-- BORDE DE LUZ AZUL -->
-    <path
-        android:strokeColor="#FF148EFF"
-        android:strokeWidth="1"
-        android:fillColor="#00000000"
-        android:pathData="M15,15 
-                         C15,15 15,93 93,93 
-                         C93,93 93,15 15,15" />
+    <!-- Icono ThunderNet Premium con Escudo BattleNet -->
+    <group>
+        <!-- Fondo circular del icono -->
+        <path
+            android:fillColor="@color/battlenet_primary_dark"
+            android:pathData="M54,0C83.8,0 108,24.2 108,54C108,83.8 83.8,108 54,108C24.2,108 0,83.8 0,54C0,24.2 24.2,0 54,0Z"/>
         
+        <!-- Escudo estilo BattleNet -->
+        <group>
+            <!-- Base del escudo -->
+            <path
+                android:fillColor="@color/battlenet_primary_medium"
+                android:pathData="M24,30 C24,30 54,18 84,30 C84,30 96,54 84,78 C84,78 54,90 24,78 C24,78 12,54 24,30 Z"/>
+            
+            <!-- Borde del escudo -->
+            <path
+                android:fillColor="transparent"
+                android:strokeColor="@color/battlenet_border"
+                android:strokeWidth="1.5"
+                android:pathData="M24,30 C24,30 54,18 84,30 C84,30 96,54 84,78 C84,78 54,90 24,78 C24,78 12,54 24,30 Z"/>
+            
+            <!-- Detalle superior del escudo -->
+            <path
+                android:fillColor="@color/battlenet_electric"
+                android:pathData="M40,34 L68,34 L70,38 L38,38 Z"
+                android:fillAlpha="0.7"/>
+        </group>
+        
+        <!-- W de WoW dentro del escudo -->
+        <path
+            android:fillColor="@color/battlenet_text_primary"
+            android:pathData="M36,52 L42,40 L48,52 L54,40 L60,52 L66,40 L72,52 L78,40 L84,52 L90,58 L84,64 L78,44 L72,64 L66,44 L60,64 L54,44 L48,64 L42,44 L36,64 L30,58 Z"/>
+        
+        <!-- Rayo ThunderNet centrado -->
+        <group>
+            <!-- Rayo principal -->
+            <path
+                android:fillColor="@color/battlenet_electric"
+                android:pathData="M52,56 L52,62 L50,62 L56,70 L56,64 L58,64 L52,56 Z"/>
+            
+            <!-- Efecto de energía del rayo -->
+            <path
+                android:fillColor="@color/battlenet_electric_light"
+                android:fillAlpha="0.6"
+                android:pathData="M53,57 L53,63 L51,63 L57,69 L57,65 L59,65 L53,57 Z"/>
+            
+            <!-- Brillo intenso del rayo -->
+            <path
+                android:fillColor="@color/white"
+                android:fillAlpha="0.3"
+                android:pathData="M54,58 L54,62 L52,62 L58,68 L58,64 L60,64 L54,58 Z"/>
+        </group>
+        
+        <!-- Detalles decorativos del escudo -->
+        <group>
+            <!-- Remaches del escudo -->
+            <path
+                android:fillColor="@color/battlenet_accent_gold"
+                android:pathData="M34,38 Q36,36 38,38 Q36,40 34,38 Z"/>
+            <path
+                android:fillColor="@color/battlenet_accent_gold"
+                android:pathData="M54,34 Q56,32 58,34 Q56,36 54,34 Z"/>
+            <path
+                android:fillColor="@color/battlenet_accent_gold"
+                android:pathData="M74,38 Q76,36 78,38 Q76,40 74,38 Z"/>
+            <path
+                android:fillColor="@color/battlenet_accent_gold"
+                android:pathData="M34,70 Q36,68 38,70 Q36,72 34,70 Z"/>
+            <path
+                android:fillColor="@color/battlenet_accent_gold"
+                android:pathData="M54,74 Q56,72 58,74 Q56,76 54,74 Z"/>
+            <path
+                android:fillColor="@color/battlenet_accent_gold"
+                android:pathData="M74,70 Q76,68 78,70 Q76,72 74,70 Z"/>
+            
+            <!-- Líneas decorativas del escudo -->
+            <path
+                android:fillColor="transparent"
+                android:strokeColor="@color/battlenet_accent_gold"
+                android:strokeWidth="0.8"
+                android:pathData="M40,42 L68,42"/>
+            <path
+                android:fillColor="transparent"
+                android:strokeColor="@color/battlenet_accent_gold"
+                android:strokeWidth="0.8"
+                android:pathData="M38,66 L70,66"/>
+        </group>
+        
+        <!-- Acento dorado BattleNet en esquinas (mantenido) -->
+        <path
+            android:fillColor="@color/battlenet_accent_gold"
+            android:pathData="M20,20 L24,16 L28,20 L24,24Z"
+            android:fillAlpha="0.8"/>
+        <path
+            android:fillColor="@color/battlenet_accent_gold"
+            android:pathData="M88,20 L92,16 L96,20 L92,24Z"
+            android:fillAlpha="0.8"/>
+        <path
+            android:fillColor="@color/battlenet_accent_gold"
+            android:pathData="M20,88 L24,84 L28,88 L24,92Z"
+            android:fillAlpha="0.8"/>
+        <path
+            android:fillColor="@color/battlenet_accent_gold"
+            android:pathData="M88,88 L92,84 L96,88 L92,92Z"
+            android:fillAlpha="0.8"/>
+        
+        <!-- Efecto de sombra en el escudo -->
+        <path
+            android:fillColor="@color/black"
+            android:fillAlpha="0.2"
+            android:pathData="M24,30 C24,30 54,18 84,30 L84,32 C84,32 56,20 28,32 L24,30 Z"/>
+        
+        <!-- Efecto de luz en el escudo -->
+        <path
+            android:fillColor="@color/white"
+            android:fillAlpha="0.1"
+            android:pathData="M24,78 C24,78 54,90 84,78 L84,76 C84,76 56,88 28,76 L24,78 Z"/>
+    </group>
 </vector>

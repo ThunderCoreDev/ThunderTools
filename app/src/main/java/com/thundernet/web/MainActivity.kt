@@ -11,6 +11,7 @@ import android.os.Looper
 import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
@@ -22,22 +23,39 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private lateinit var splashLayout: View
     private lateinit var preferences: SharedPreferences
-    private lateinit var menuButton: Button  // Cambiado de ImageButton a Button
+    private lateinit var menuButton: Button
     private var currentUrl: String = "http://tuservidor.com"
     private var loadingAnimationHandler: Handler? = null
     private var loadingAnimationRunnable: Runnable? = null
+    
+    // Variables para el servidor WoW
+    private var wowServer: String = "127.0.0.1"
+    private var wowPort: String = "8085"
     
     companion object {
         private const val TAG = "ThunderNetApp"
         private const val PREF_SERVER_URL = "server_url"
         private const val DEFAULT_URL = "http://tuservidor.com"
         private const val PREF_DARK_MODE = "dark_mode"
+        
+        // Nuevas preferencias para servidor WoW
+        private const val PREF_WOW_SERVER = "wow_server"
+        private const val PREF_WOW_PORT = "wow_port"
+        
+        private const val DEFAULT_WOW_SERVER = "127.0.0.1"
+        private const val DEFAULT_WOW_PORT = "8085" // Puerto típico de authserver
+        
+        // Tiempo de timeout para ping
+        private const val PING_TIMEOUT = 3000 // 3 segundos
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -51,40 +69,41 @@ class MainActivity : AppCompatActivity() {
             
             // Obtener la URL guardada
             currentUrl = preferences.getString(PREF_SERVER_URL, DEFAULT_URL) ?: DEFAULT_URL
-            Log.d(TAG, "URL a cargar: $currentUrl")
             
-            // Configurar modo oscuro desde preferencias
+            // Obtener configuración del servidor WoW
+            wowServer = preferences.getString(PREF_WOW_SERVER, DEFAULT_WOW_SERVER) ?: DEFAULT_WOW_SERVER
+            wowPort = preferences.getString(PREF_WOW_PORT, DEFAULT_WOW_PORT) ?: DEFAULT_WOW_PORT
+            
+            Log.d(TAG, "URL a cargar: $currentUrl")
+            Log.d(TAG, "Servidor WoW: $wowServer:$wowPort")
+            
+            // Configurar modo oscuro
             val darkModeEnabled = preferences.getBoolean(PREF_DARK_MODE, false)
             AppCompatDelegate.setDefaultNightMode(
                 if (darkModeEnabled) AppCompatDelegate.MODE_NIGHT_YES 
                 else AppCompatDelegate.MODE_NIGHT_NO
             )
             
-            // Mostrar pantalla de carga con animaciones
+            // Mostrar pantalla de carga
             try {
                 setContentView(R.layout.splash_layout)
                 splashLayout = findViewById(R.id.splashLayout)
-                
-                // Inicializar animaciones del splash
                 setupSplashAnimations()
-                
-                Log.d(TAG, "Splash layout cargado con animaciones")
+                Log.d(TAG, "Splash layout cargado")
                 
             } catch (e: Exception) {
                 Log.e(TAG, "Error cargando splash: ${e.message}")
-                // Intentar cargar layout alternativo
                 setContentView(android.R.layout.simple_list_item_1)
             }
             
             // Esperar 5 segundos y cargar WebView
             Handler(Looper.getMainLooper()).postDelayed({
                 loadWebView()
-            }, 5000) // 5 segundos
+            }, 5000)
             
         } catch (e: Exception) {
             Log.e(TAG, "Error en onCreate: ${e.message}")
             e.printStackTrace()
-            // Mostrar mensaje de error al usuario
             showErrorCrash(e.message ?: "Error desconocido")
         }
     }
@@ -95,20 +114,18 @@ class MainActivity : AppCompatActivity() {
             val wowLogo = findViewById<ImageView>(R.id.wowLogo)
             val loadingText = findViewById<TextView>(R.id.loadingText)
             
-            // ANIMACIÓN 1: Rotación del círculo de carga
             val rotateAnimation = RotateAnimation(
                 0f, 360f,
                 Animation.RELATIVE_TO_SELF, 0.5f,
                 Animation.RELATIVE_TO_SELF, 0.5f
             ).apply {
-                duration = 1200 // 1.2 segundos por vuelta
+                duration = 1200
                 repeatCount = Animation.INFINITE
                 interpolator = android.view.animation.LinearInterpolator()
             }
             
             loadingCircle.startAnimation(rotateAnimation)
             
-            // ANIMACIÓN 2: Fade in para el logo
             wowLogo?.alpha = 0f
             wowLogo?.animate()
                 ?.alpha(1f)
@@ -116,18 +133,9 @@ class MainActivity : AppCompatActivity() {
                 ?.setStartDelay(200)
                 ?.start()
             
-            // ANIMACIÓN 3: Texto "Conectando..." con puntos animados
             loadingText?.let {
                 animateLoadingText(it)
             }
-            
-            // ANIMACIÓN 4: Parpadeo sutil del logo
-            val fadeAnimation = android.view.animation.AlphaAnimation(0.7f, 1.0f).apply {
-                duration = 1500
-                repeatMode = android.view.animation.Animation.REVERSE
-                repeatCount = android.view.animation.Animation.INFINITE
-            }
-            wowLogo?.startAnimation(fadeAnimation)
             
         } catch (e: Exception) {
             Log.e(TAG, "Error configurando animaciones: ${e.message}")
@@ -155,15 +163,12 @@ class MainActivity : AppCompatActivity() {
     
     private fun stopSplashAnimations() {
         try {
-            // Detener animación del círculo
             val loadingCircle = findViewById<ImageView?>(R.id.loadingCircle)
             loadingCircle?.clearAnimation()
             
-            // Detener animación del logo
             val wowLogo = findViewById<ImageView?>(R.id.wowLogo)
             wowLogo?.clearAnimation()
             
-            // Detener animación del texto
             loadingAnimationRunnable?.let {
                 loadingAnimationHandler?.removeCallbacks(it)
             }
@@ -176,381 +181,112 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadWebView() {
-    Log.d(TAG, "loadWebView iniciado")
-    
-    // Detener animaciones del splash
-    stopSplashAnimations()
-    
-    try {
-        setContentView(R.layout.activity_main)
+        Log.d(TAG, "loadWebView iniciado")
+        stopSplashAnimations()
         
-        // Inicializar vistas con verificaciones
-        webView = findViewById(R.id.webView) ?: throw IllegalStateException("WebView no encontrado")
-        val progressBar: ProgressBar = findViewById(R.id.progressBar)
-        val errorLayout: LinearLayout = findViewById(R.id.errorLayout)
-        val retryButton: Button = findViewById(R.id.retryButton)
-        menuButton = findViewById(R.id.menuButton)  // Inicializar aquí
-        
-        // Configurar WebView con mejor manejo de errores
-        setupWebView(progressBar, errorLayout, retryButton)
-        
-        // Configurar botón de menú
-        menuButton.setOnClickListener {
-            showOptionsMenu(it)
+        try {
+            setContentView(R.layout.activity_main)
+            
+            webView = findViewById(R.id.webView) ?: throw IllegalStateException("WebView no encontrado")
+            val progressBar: ProgressBar = findViewById(R.id.progressBar)
+            val errorLayout: LinearLayout = findViewById(R.id.errorLayout)
+            val retryButton: Button = findViewById(R.id.retryButton)
+            menuButton = findViewById(R.id.menuButton)
+            
+            setupWebView(progressBar, errorLayout, retryButton)
+            
+            menuButton.setOnClickListener {
+                showOptionsMenu(it)
+            }
+            
+            setupMenuButtonAnimation()
+            
+            retryButton.setOnClickListener {
+                errorLayout.visibility = View.GONE
+                webView.visibility = View.VISIBLE
+                webView.reload()
+            }
+            
+            if (webView.url.isNullOrEmpty()) {
+                loadUrl(currentUrl)
+            }
+            
+            Log.d(TAG, "WebView cargado exitosamente")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en loadWebView: ${e.message}")
+            e.printStackTrace()
+            showErrorCrash("No se pudo cargar la aplicación: ${e.message}")
         }
-        // Método del botón de Ajustes
-        setupMenuButtonAnimation()
-        
-        // Configurar botón de reintentar
-        retryButton.setOnClickListener {
-            errorLayout.visibility = View.GONE
-            webView.visibility = View.VISIBLE
-            webView.reload()
-        }
-        
-        // Cargar URL inicial solo si no hay algo cargado
-        if (webView.url.isNullOrEmpty()) {
-            loadUrl(currentUrl)
-        }
-        
-        Log.d(TAG, "WebView cargado exitosamente")
-        
-    } catch (e: Exception) {
-        Log.e(TAG, "Error en loadWebView: ${e.message}")
-        e.printStackTrace()
-        showErrorCrash("No se pudo cargar la aplicación: ${e.message}")
     }
-}
 
-private fun setupMenuButtonAnimation() {
-    // Animación de rotación al hacer clic
-    menuButton.setOnTouchListener { v, event ->
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                // Animación de pulsación
-                v.animate()
-                    .scaleX(0.9f)
-                    .scaleY(0.9f)
-                    .setDuration(100)
-                    .start()
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                // Animación de liberación
-                v.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(100)
-                    .start()
-                    
-                // Animación de rotación
-                v.animate()
-                    .rotationBy(360f)
-                    .setDuration(500)
-                    .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
-                    .start()
-            }
-        }
-        false
-    }
-}
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView(progressBar: ProgressBar, errorLayout: LinearLayout, retryButton: Button) {
         try {
             val webSettings = webView.settings
             
-            // CONFIGURACIÓN ESPECÍFICA PARA DISEÑO MÓVIL
             webSettings.apply {
-                // Habilitar JavaScript
                 javaScriptEnabled = true
-                javaScriptCanOpenWindowsAutomatically = true
-                
-                // Configuración para diseño responsive
                 loadWithOverviewMode = true
                 useWideViewPort = true
-                
-                // Configuración de zoom para móvil
                 setSupportZoom(true)
                 builtInZoomControls = true
                 displayZoomControls = false
-                
-                // Optimización para móviles
                 domStorageEnabled = true
-                databaseEnabled = true
                 allowFileAccess = true
                 allowContentAccess = true
-                
-                // Caché
                 cacheMode = WebSettings.LOAD_DEFAULT
-                setAppCacheEnabled(true)
                 
-                // Mejor renderizado en móvil
-                setRenderPriority(WebSettings.RenderPriority.HIGH)
-                loadsImagesAutomatically = true
-                
-                // Para contenido mixto
-                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                
-                // Deshabilitar safe browsing si causa problemas
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     safeBrowsingEnabled = false
                 }
-                
-                // Configuración de texto
-                defaultFontSize = 16
-                defaultFixedFontSize = 13
-                minimumFontSize = 8
-                minimumLogicalFontSize = 8
             }
             
-            // Habilitar cookies
             CookieManager.getInstance().setAcceptCookie(true)
             CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
             
-            // Configurar User Agent específico para móvil
-            val mobileUserAgent = "Mozilla/5.0 (Linux; Android 10; Mobile) " +
-                                 "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                                 "Chrome/91.0.4472.120 Mobile Safari/537.36"
-            webSettings.userAgentString = mobileUserAgent
-            
-            // Configurar WebViewClient personalizado
             webView.webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                     progressBar.visibility = View.VISIBLE
                     errorLayout.visibility = View.GONE
                     webView.visibility = View.VISIBLE
-                    Log.d(TAG, "Página iniciando: $url")
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
                     progressBar.visibility = View.GONE
-                    Log.d(TAG, "Página cargada: $url")
-                    
-                    // INYECTAR CSS Y META TAGS PARA FORZAR DISEÑO MÓVIL
                     injectMobileCSS(view)
                     
-                    // Verificar si la página se cargó correctamente
                     if (view?.progress == 100) {
                         errorLayout.visibility = View.GONE
                         webView.visibility = View.VISIBLE
                     }
                 }
                 
-                // Función para inyectar CSS y meta tags
                 private fun injectMobileCSS(view: WebView?) {
                     val css = """
                         <style>
-                            /* Forzar viewport móvil */
-                            @viewport { width: device-width; }
-                            @-ms-viewport { width: device-width; }
-                            @-webkit-viewport { width: device-width; }
-                            
-                            /* Asegurar que el body ocupe toda la pantalla */
-                            html, body {
-                                width: 100% !important;
-                                height: 100% !important;
-                                margin: 0 !important;
-                                padding: 0 !important;
-                                overflow-x: hidden !important;
-                                max-width: 100% !important;
-                                -webkit-text-size-adjust: 100%;
-                            }
-                            
-                            /* Hacer las imágenes responsive */
-                            img {
-                                max-width: 100% !important;
-                                height: auto !important;
-                            }
-                            
-                            /* Hacer las tablas responsive */
-                            table {
-                                width: 100% !important;
-                                max-width: 100% !important;
-                                display: block !important;
-                                overflow-x: auto !important;
-                                -webkit-overflow-scrolling: touch !important;
-                            }
-                            
-                            /* Mejorar visualización en móvil */
-                            * {
-                                max-width: 100% !important;
-                                box-sizing: border-box !important;
-                            }
-                            
-                            /* Ajustar si hay elementos con ancho fijo */
-                            div[style*="width:"], table[width] {
-                                width: 100% !important;
-                                max-width: 100% !important;
-                            }
-                            
-                            /* Para contenido dentro de iframes */
-                            iframe {
-                                width: 100% !important;
-                                max-width: 100% !important;
-                            }
+                            html, body { width: 100% !important; max-width: 100% !important; }
+                            img { max-width: 100% !important; height: auto !important; }
                         </style>
                     """.trimIndent()
                     
-                    val metaTags = """
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-                        <meta name="HandheldFriendly" content="true">
-                        <meta name="MobileOptimized" content="width">
-                    """.trimIndent()
-                    
                     view?.evaluateJavascript("""
-                        // Verificar si ya existe un viewport meta tag
-                        var existingMeta = document.querySelector('meta[name="viewport"]');
-                        if (!existingMeta) {
+                        if (!document.querySelector('meta[name=\"viewport\"]')) {
                             var meta = document.createElement('meta');
                             meta.name = 'viewport';
-                            meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
+                            meta.content = 'width=device-width, initial-scale=1.0';
                             document.head.appendChild(meta);
-                        } else {
-                            // Actualizar el existente si es necesario
-                            existingMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
                         }
-                        
-                        // Añadir meta tag adicional
-                        var meta2 = document.createElement('meta');
-                        meta2.name = 'HandheldFriendly';
-                        meta2.content = 'true';
-                        document.head.appendChild(meta2);
-                        
-                        var meta3 = document.createElement('meta');
-                        meta3.name = 'MobileOptimized';
-                        meta3.content = 'width';
-                        document.head.appendChild(meta3);
-                        
-                        // Inyectar CSS si no existe
-                        if (!document.getElementById('mobile-css-injected')) {
-                            var style = document.createElement('style');
-                            style.id = 'mobile-css-injected';
-                            style.innerHTML = `$css`;
-                            document.head.appendChild(style);
-                        }
-                        
-                        // Aplicar estilos inmediatamente al body
-                        document.body.style.width = '100%';
-                        document.body.style.maxWidth = '100%';
-                        document.body.style.overflowX = 'hidden';
-                        
-                        // Forzar reflow para aplicar cambios
-                        document.body.style.display = 'none';
-                        document.body.offsetHeight; // trigger reflow
-                        document.body.style.display = '';
-                        
                     """.trimIndent(), null)
                 }
 
-                override fun onReceivedError(
-                    view: WebView?,
-                    request: WebResourceRequest?,
-                    error: WebResourceError?
-                ) {
-                    val errorMsg = error?.description ?: "Error desconocido"
-                    val errorCode = error?.errorCode ?: -1
-                    
-                    Log.w(TAG, "Error WebView detectado: $errorMsg (Código: $errorCode)")
-                    
-                    // LISTA DE ERRORES DE SEGURIDAD QUE VAMOS A IGNORAR
-                    val securityErrors = listOf(
-                        WebViewClient.ERROR_UNSAFE_RESOURCE,
-                        WebViewClient.ERROR_UNSUPPORTED_SCHEME
-                    )
-                    
-                    // Verificar si es un error de seguridad
-                    val isSecurityError = securityErrors.contains(errorCode) ||
-                            errorMsg.contains("ORB", ignoreCase = true) ||
-                            errorMsg.contains("CORS", ignoreCase = true) ||
-                            errorMsg.contains("ERR_BLOCKED_BY_ORB", ignoreCase = true) ||
-                            errorMsg.contains("ERR_BLOCKED_BY_CORS", ignoreCase = true) ||
-                            errorMsg.contains("ERR_UNSAFE_RESOURCE", ignoreCase = true) ||
-                            errorMsg.contains("unsafe", ignoreCase = true) ||
-                            errorMsg.contains("blocked", ignoreCase = true) ||
-                            errorMsg.contains("security", ignoreCase = true)
-                    
-                    if (isSecurityError) {
-                        // IGNORAR COMPLETAMENTE el error - no mostrar nada al usuario
-                        Log.w(TAG, "Error de seguridad ignorado: $errorMsg")
-                        
-                        // Si la página ya está parcialmente cargada, solo mostrar advertencia en logs
-                        if (webView.progress > 50) {
-                            Log.d(TAG, "Página cargada parcialmente (${webView.progress}%), ignorando error de seguridad")
-                        }
-                    } else if (errorMsg.contains("ERR_FAILED", ignoreCase = true)) {
-                        // Para ERR_FAILED, verificar si ya cargó algo
-                        if (webView.progress > 70) {
-                            Log.w(TAG, "ERR_FAILED ignorado, página cargada al ${webView.progress}%")
-                        } else {
-                            // Si está muy cargada, mostrar error leve
-                            showError("Error de conexión: $errorMsg")
-                        }
-                    } else if (errorMsg.contains("ERR_CONNECTION_REFUSED", ignoreCase = true) ||
-                               errorMsg.contains("ERR_NAME_NOT_RESOLVED", ignoreCase = true) ||
-                               errorMsg.contains("ERR_INTERNET_DISCONNECTED", ignoreCase = true)) {
-                        // Mostrar solo errores de conexión reales
-                        showError("No se puede conectar al servidor: $errorMsg")
-                    } else {
-                        // Para otros errores, solo loggear pero no mostrar al usuario
-                        Log.e(TAG, "Error WebView: $errorMsg")
-                    }
-                }
-                
-                // SOBREESCRIBIR PARA INTERCEPTAR Y PERMITIR TODO
                 @SuppressLint("WebViewClientOnReceivedSslError")
                 override fun onReceivedSslError(
                     view: WebView?,
                     handler: SslErrorHandler?,
                     error: SslError?
                 ) {
-                    // IMPORTANTE: PERMITIR TODOS LOS ERRORES SSL
-                    Log.w(TAG, "Error SSL ignorado: ${error?.toString()}")
-                    handler?.proceed() // Continuar a pesar del error SSL
-                }
-                
-                // IMPORTANTE: Para evitar bloqueos de CORS
-                @SuppressLint("WebViewApiAvailability")
-                @Deprecated("Deprecated in Java")
-                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                    url?.let {
-                        Log.d(TAG, "Intentando cargar URL: $it")
-                        // Permitir todos los protocolos
-                        if (it.startsWith("http://") || it.startsWith("https://") || 
-                            it.startsWith("file://") || it.startsWith("content://")) {
-                            return false // Dejar que WebView maneje la URL
-                        }
-                        // Para otros protocolos (tel:, mailto:, etc.)
-                        return true
-                    }
-                    return false
-                }
-                
-                // Para Android N y superior
-                override fun shouldOverrideUrlLoading(
-                    view: WebView?,
-                    request: WebResourceRequest?
-                ): Boolean {
-                    val url = request?.url.toString()
-                    Log.d(TAG, "Intentando cargar URL (nueva API): $url")
-                    
-                    // Permitir todos los protocolos web
-                    if (url.startsWith("http://") || url.startsWith("https://") ||
-                        url.startsWith("file://") || url.startsWith("content://")) {
-                        return false // Dejar que WebView maneje la URL
-                    }
-                    return true
-                }
-            }
-            
-            // Configurar WebChromeClient para mejor manejo de JavaScript
-            webView.webChromeClient = object : WebChromeClient() {
-                override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
-                    Log.d(TAG, "Console: ${consoleMessage.message()} -- ${consoleMessage.lineNumber()}")
-                    return true
-                }
-                
-                override fun onPermissionRequest(request: PermissionRequest?) {
-                    // Otorgar todos los permisos solicitados
-                    request?.grant(request.resources)
+                    handler?.proceed()
                 }
             }
             
@@ -559,51 +295,46 @@ private fun setupMenuButtonAnimation() {
         }
     }
     
-    private fun loadUrl(url: String) {
-        try {
-            Log.d(TAG, "Cargando URL: $url")
-            
-            // Headers para forzar diseño móvil
-            val headers = HashMap<String, String>()
-            headers["User-Agent"] = "Mozilla/5.0 (Linux; Android 10; Mobile) " +
-                                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                                    "Chrome/91.0.4472.120 Mobile Safari/537.36"
-            headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-            headers["Accept-Language"] = "es-ES,es;q=0.9,en;q=0.8"
-            headers["X-Requested-With"] = "com.thundernet.web"
-            headers["Sec-Fetch-Dest"] = "document"
-            headers["Sec-Fetch-Mode"] = "navigate"
-            headers["Sec-Fetch-Site"] = "none"
-            headers["Sec-Fetch-User"] = "?1"
-            headers["Upgrade-Insecure-Requests"] = "1"
-            headers["Cache-Control"] = "no-cache"
-            
-            webView.loadUrl(url, headers)
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Error cargando URL: ${e.message}")
-            
-            // Intentar sin headers si falla
-            try {
-                webView.loadUrl(url)
-            } catch (e2: Exception) {
-                Log.e(TAG, "Error en segundo intento: ${e2.message}")
-                showError("No se pudo cargar la página: ${e2.message}")
+    private fun setupMenuButtonAnimation() {
+        menuButton.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    v.animate()
+                        .scaleX(0.9f)
+                        .scaleY(0.9f)
+                        .setDuration(100)
+                        .start()
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start()
+                    
+                    v.animate()
+                        .rotationBy(360f)
+                        .setDuration(500)
+                        .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
+                        .start()
+                }
             }
+            false
         }
     }
     
     private fun showOptionsMenu(view: View) {
         try {
+            // MENÚ ACTUALIZADO: Añadida opción "Reino"
             val menuItems = listOf(
                 "🔄 Actualizar",
-                "⚙️ Configurar URL", 
+                "⚙️ Configurar URL",
+                "🌐 Reino",  // NUEVA OPCIÓN
                 "🌙 Modo Oscuro",
                 "🧹 Limpiar Caché",
                 "ℹ️ Acerca de"
             )
             
-            // Crear un ArrayAdapter personalizado
             val adapter = object : ArrayAdapter<String>(
                 this,
                 android.R.layout.simple_list_item_1,
@@ -612,45 +343,33 @@ private fun setupMenuButtonAnimation() {
                 override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                     val view = super.getView(position, convertView, parent)
                     val textView = view.findViewById<TextView>(android.R.id.text1)
-                    
-                    // Personalizar el texto a BLANCO
                     textView.setTextColor(Color.WHITE)
                     textView.textSize = 16f
                     textView.gravity = Gravity.START or Gravity.CENTER_VERTICAL
                     textView.setPadding(24.dpToPx(), 16.dpToPx(), 24.dpToPx(), 16.dpToPx())
                     textView.minHeight = 48.dpToPx()
-                    
                     return view
                 }
             }
             
-            // Crear el diálogo con .setAdapter() en lugar de .setItems()
             AlertDialog.Builder(this)
                 .setTitle("⚡ ThunderNet APK ⚡")
                 .setAdapter(adapter) { dialog, which ->
                     dialog.dismiss()
                     when (which) {
-                        0 -> { // Actualizar - CAMBIADO: Solo recarga la página actual
+                        0 -> {
                             webView.reload()
-                            showToast("✅ Página actualizada con exito")
+                            showToast("✅ Página actualizada")
                         }
-                        1 -> { // Configurar URL
-                            showUrlConfigDialog()
-                        }
-                        2 -> { // Modo Oscuro
-                            toggleDarkMode()
-                        }
-                        3 -> { // Limpiar Caché
-                            clearCache()
-                        }
-                        4 -> { // Acerca de
-                            showAboutDialog()
-                        }
+                        1 -> showUrlConfigDialog()
+                        2 -> showRealmStatus()  // NUEVO: Mostrar estado del reino
+                        3 -> toggleDarkMode()
+                        4 -> clearCache()
+                        5 -> showAboutDialog()
                     }
                 }
                 .show()
                 .apply {
-                    // Personalizar el título
                     findViewById<TextView>(android.R.id.title)?.apply {
                         setTextColor(Color.parseColor("#00B4FF"))
                         textSize = 18f
@@ -659,10 +378,8 @@ private fun setupMenuButtonAnimation() {
                         typeface = android.graphics.Typeface.DEFAULT_BOLD
                     }
                     
-                    // Personalizar fondo
                     window?.setBackgroundDrawableResource(R.drawable.dialog_background)
                     
-                    // Personalizar la lista si existe
                     val listView = findViewById<ListView>(android.R.id.list)
                     listView?.setBackgroundColor(Color.parseColor("#0A1428"))
                 }
@@ -673,9 +390,153 @@ private fun setupMenuButtonAnimation() {
         }
     }
     
+    // NUEVO: Diálogo para mostrar estado del reino
+    private fun showRealmStatus() {
+        Log.d(TAG, "Verificando estado del servidor: $wowServer:$wowPort")
+        
+        // Mostrar diálogo de carga
+        val loadingDialog = AlertDialog.Builder(this)
+            .setTitle("🌐 Verificando Reino...")
+            .setMessage("Conectando con el servidor...")
+            .setCancelable(false)
+            .create()
+        
+        loadingDialog.show()
+        
+        // Ejecutar ping en un hilo separado
+        Executors.newSingleThreadExecutor().execute {
+            var isOnline = false
+            var errorMessage = ""
+            
+            try {
+                val port = try {
+                    wowPort.toInt()
+                } catch (e: NumberFormatException) {
+                    8085
+                }
+                
+                Log.d(TAG, "Intentando conectar a $wowServer:$port")
+                
+                // Intentar conexión socket
+                val socket = Socket()
+                socket.connect(InetSocketAddress(wowServer, port), PING_TIMEOUT)
+                socket.close()
+                isOnline = true
+                Log.d(TAG, "Conexión exitosa")
+                
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "Error desconocido"
+                Log.e(TAG, "Error de conexión: $errorMessage")
+                isOnline = false
+            }
+            
+            // Volver al hilo principal para mostrar resultado
+            runOnUiThread {
+                loadingDialog.dismiss()
+                showRealmStatusResult(isOnline, errorMessage)
+            }
+        }
+    }
+    
+    private fun showRealmStatusResult(isOnline: Boolean, errorMessage: String = "") {
+        val statusText = if (isOnline) "🟢 ONLINE" else "🔴 OFFLINE"
+        val statusColor = if (isOnline) "#00FF00" else "#FF0000"
+        val serverInfo = "Servidor: $wowServer\nPuerto: $wowPort"
+        val message = if (isOnline) {
+            "✅ El servidor está funcionando correctamente.\n\n$serverInfo"
+        } else {
+            "❌ No se pudo conectar al servidor.\n\n$serverInfo\n\nError: ${if (errorMessage.isNotEmpty()) errorMessage else "Tiempo de espera agotado"}"
+        }
+        
+        // Crear layout personalizado
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32.dpToPx(), 24.dpToPx(), 32.dpToPx(), 16.dpToPx())
+            setBackgroundColor(Color.parseColor("#0A1428"))
+        }
+        
+        // Estado
+        val statusView = TextView(this).apply {
+            text = statusText
+            setTextColor(Color.parseColor(statusColor))
+            textSize = 22f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 20.dpToPx())
+        }
+        
+        // Mensaje
+        val messageView = TextView(this).apply {
+            text = message
+            setTextColor(Color.WHITE)
+            textSize = 14f
+            gravity = Gravity.CENTER
+            setLineSpacing(1.2f, 1.2f)
+            setPadding(0, 0, 0, 24.dpToPx())
+        }
+        
+        // Indicador visual
+        val indicator = View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                4.dpToPx()
+            ).apply {
+                bottomMargin = 20.dpToPx()
+            }
+            setBackgroundColor(Color.parseColor(statusColor))
+        }
+        
+        layout.addView(statusView)
+        layout.addView(indicator)
+        layout.addView(messageView)
+        
+        AlertDialog.Builder(this)
+            .setTitle("🌐 Estado del Reino")
+            .setView(layout)
+            .setPositiveButton("🔄 Reintentar") { dialog, _ ->
+                dialog.dismiss()
+                showRealmStatus()
+            }
+            .setNegativeButton("⬅️ Volver") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setNeutralButton("⚙️ Configurar") { dialog, _ ->
+                dialog.dismiss()
+                showUrlConfigDialog()
+            }
+            .show()
+            .apply {
+                window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                
+                findViewById<TextView>(android.R.id.title)?.apply {
+                    setTextColor(Color.parseColor("#00B4FF"))
+                    textSize = 18f
+                    gravity = Gravity.CENTER
+                    setPadding(0, 16.dpToPx(), 0, 8.dpToPx())
+                }
+                
+                // Personalizar botones
+                getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+                    setTextColor(Color.parseColor("#0A1428"))
+                    setBackgroundColor(Color.parseColor("#00B4FF"))
+                    setPadding(24.dpToPx(), 12.dpToPx(), 24.dpToPx(), 12.dpToPx())
+                }
+                getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
+                    setTextColor(Color.parseColor("#00B4FF"))
+                    setBackgroundColor(Color.parseColor("#132347"))
+                    setPadding(24.dpToPx(), 12.dpToPx(), 24.dpToPx(), 12.dpToPx())
+                }
+                getButton(AlertDialog.BUTTON_NEUTRAL)?.apply {
+                    setTextColor(Color.parseColor("#00B4FF"))
+                    setBackgroundColor(Color.parseColor("#132347"))
+                    setPadding(24.dpToPx(), 12.dpToPx(), 24.dpToPx(), 12.dpToPx())
+                }
+            }
+    }
+    
+    // ACTUALIZADO: Diálogo de configuración de URL ahora incluye servidor WoW
     private fun showUrlConfigDialog() {
         try {
-            // Crear el layout personalizado
             val layout = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(24.dpToPx(), 16.dpToPx(), 24.dpToPx(), 8.dpToPx())
@@ -684,28 +545,95 @@ private fun setupMenuButtonAnimation() {
             
             // Título
             val title = TextView(this).apply {
-                text = "⚙️ Configuración de URL del servidor"
-                setTextColor(Color.parseColor("#00B4FF")) // Azul eléctrico
+                text = "⚙️ Configuración del Servidor"
+                setTextColor(Color.parseColor("#00B4FF"))
                 textSize = 18f
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
                 gravity = Gravity.CENTER
-                setPadding(0, 0, 0, 16.dpToPx())
+                setPadding(0, 0, 0, 20.dpToPx())
             }
             
-            // EditText personalizado
-            val editText = EditText(this).apply {
+            // Sub-título 1: Página Web
+            val subtitle1 = TextView(this).apply {
+                text = "🌐 Página Web:"
+                setTextColor(Color.WHITE)
+                textSize = 16f
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+                setPadding(0, 10.dpToPx(), 0, 8.dpToPx())
+            }
+            
+            // URL de la página web
+            val urlEditText = EditText(this).apply {
                 setText(currentUrl)
                 hint = "Ej: http://tuservidor.com"
                 setTextColor(Color.WHITE)
                 setHintTextColor(Color.parseColor("#CCCCCC"))
-                
-                // Usar el drawable si existe, sino usar color sólido
                 try {
                     background = ContextCompat.getDrawable(this@MainActivity, R.drawable.edittext_background)
                 } catch (e: Exception) {
                     setBackgroundColor(Color.parseColor("#0A1428"))
                 }
-                
+                setPadding(16.dpToPx(), 12.dpToPx(), 16.dpToPx(), 12.dpToPx())
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = 20.dpToPx()
+                }
+            }
+            
+            // Separador
+            val separator = View(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    1.dpToPx()
+                ).apply {
+                    bottomMargin = 20.dpToPx()
+                    topMargin = 10.dpToPx()
+                }
+                setBackgroundColor(Color.parseColor("#00B4FF"))
+            }
+            
+            // Sub-título 2: Servidor WoW
+            val subtitle2 = TextView(this).apply {
+                text = "🌐 Servidor WoW:"
+                setTextColor(Color.WHITE)
+                textSize = 16f
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+                setPadding(0, 10.dpToPx(), 0, 8.dpToPx())
+            }
+            
+            // Campo para servidor WoW
+            val serverEditText = EditText(this).apply {
+                setText(wowServer)
+                hint = "IP o dominio del servidor"
+                setTextColor(Color.WHITE)
+                setHintTextColor(Color.parseColor("#CCCCCC"))
+                try {
+                    background = ContextCompat.getDrawable(this@MainActivity, R.drawable.edittext_background)
+                } catch (e: Exception) {
+                    setBackgroundColor(Color.parseColor("#0A1428"))
+                }
+                setPadding(16.dpToPx(), 12.dpToPx(), 16.dpToPx(), 12.dpToPx())
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = 12.dpToPx()
+                }
+            }
+            
+            // Campo para puerto WoW
+            val portEditText = EditText(this).apply {
+                setText(wowPort)
+                hint = "Puerto (ej: 8085, 3724)"
+                setTextColor(Color.WHITE)
+                setHintTextColor(Color.parseColor("#CCCCCC"))
+                try {
+                    background = ContextCompat.getDrawable(this@MainActivity, R.drawable.edittext_background)
+                } catch (e: Exception) {
+                    setBackgroundColor(Color.parseColor("#0A1428"))
+                }
                 setPadding(16.dpToPx(), 12.dpToPx(), 16.dpToPx(), 12.dpToPx())
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -716,52 +644,86 @@ private fun setupMenuButtonAnimation() {
             }
             
             layout.addView(title)
-            layout.addView(editText)
+            layout.addView(subtitle1)
+            layout.addView(urlEditText)
+            layout.addView(separator)
+            layout.addView(subtitle2)
+            layout.addView(serverEditText)
+            layout.addView(portEditText)
             
-            // Crear el diálogo
             val dialog = AlertDialog.Builder(this)
                 .setView(layout)
-                .setPositiveButton("💾 GUARDAR") { dialog, _ ->
-                    val newUrl = editText.text.toString().trim()
+                .setPositiveButton("💾 GUARDAR TODO") { dialog, _ ->
+                    // Guardar URL de la página web
+                    val newUrl = urlEditText.text.toString().trim()
                     if (newUrl.isNotEmpty()) {
                         currentUrl = if (newUrl.startsWith("http")) newUrl else "http://$newUrl"
-                        
                         preferences.edit()
                             .putString(PREF_SERVER_URL, currentUrl)
                             .apply()
-                        
-                        // CAMBIADO: Cargar la nueva URL desde el inicio
-                        loadUrl(currentUrl)
-                        showToast("✅ URL actualizada y guardada")
                     }
+                    
+                    // Guardar configuración del servidor WoW
+                    val newServer = serverEditText.text.toString().trim()
+                    val newPort = portEditText.text.toString().trim()
+                    
+                    if (newServer.isNotEmpty()) {
+                        wowServer = newServer
+                        preferences.edit()
+                            .putString(PREF_WOW_SERVER, wowServer)
+                            .apply()
+                    }
+                    
+                    if (newPort.isNotEmpty()) {
+                        wowPort = newPort
+                        preferences.edit()
+                            .putString(PREF_WOW_PORT, wowPort)
+                            .apply()
+                    }
+                    
+                    showToast("✅ Configuración guardada")
+                    
+                    // Recargar la página web si cambió la URL
+                    if (newUrl.isNotEmpty() && newUrl != webView.url) {
+                        loadUrl(currentUrl)
+                    }
+                    
                     dialog.dismiss()
                 }
                 .setNegativeButton("❌ CANCELAR") { dialog, _ ->
                     dialog.dismiss()
                 }
-                .setNeutralButton("🔄 URL PREDETERMINADA") { dialog, _ ->
+                .setNeutralButton("🔄 VALORES PREDETERMINADOS") { dialog, _ ->
+                    // Restaurar valores predeterminados
                     currentUrl = DEFAULT_URL
-                    preferences.edit()
-                        .putString(PREF_SERVER_URL, currentUrl)
-                        .apply()
-                    // CAMBIADO: Cargar desde el inicio
+                    wowServer = DEFAULT_WOW_SERVER
+                    wowPort = DEFAULT_WOW_PORT
+                    
+                    preferences.edit().apply {
+                        putString(PREF_SERVER_URL, currentUrl)
+                        putString(PREF_WOW_SERVER, wowServer)
+                        putString(PREF_WOW_PORT, wowPort)
+                        apply()
+                    }
+                    
+                    showToast("🔄 Valores predeterminados restaurados")
+                    
+                    // Recargar página con URL predeterminada
                     loadUrl(currentUrl)
-                    showToast("🔄 URL restaurada a predeterminada")
+                    
                     dialog.dismiss()
                 }
                 .create()
             
-            // Mostrar el diálogo
             dialog.show()
             
-            // Personalizar fondo del diálogo
             try {
                 dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
             } catch (e: Exception) {
                 dialog.window?.setBackgroundDrawable(ColorDrawable(Color.parseColor("#0A1428")))
             }
             
-            // Personalizar botones después de mostrar el diálogo
+            // Personalizar botones
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
                 setTextColor(Color.parseColor("#0A1428"))
                 setBackgroundColor(Color.parseColor("#00B4FF"))
@@ -780,29 +742,43 @@ private fun setupMenuButtonAnimation() {
             
         } catch (e: Exception) {
             Log.e(TAG, "Error mostrando diálogo: ${e.message}")
-            showToast("Error al configurar URL")
+            showToast("Error al configurar servidor")
+        }
+    }
+    
+    // Métodos existentes (sin cambios)...
+    private fun loadUrl(url: String) {
+        try {
+            Log.d(TAG, "Cargando URL: $url")
+            
+            val headers = HashMap<String, String>()
+            headers["User-Agent"] = "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36"
+            
+            webView.loadUrl(url, headers)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error cargando URL: ${e.message}")
+            try {
+                webView.loadUrl(url)
+            } catch (e2: Exception) {
+                Log.e(TAG, "Error en segundo intento: ${e2.message}")
+                showError("No se pudo cargar la página: ${e2.message}")
+            }
         }
     }
     
     private fun toggleDarkMode() {
         try {
             val isDarkMode = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
-            val newMode = if (isDarkMode) {
-                AppCompatDelegate.MODE_NIGHT_NO
-            } else {
-                AppCompatDelegate.MODE_NIGHT_YES
-            }
+            val newMode = if (isDarkMode) AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
             
             AppCompatDelegate.setDefaultNightMode(newMode)
             
-            // Guardar la preferencia del modo oscuro
             preferences.edit()
                 .putBoolean(PREF_DARK_MODE, !isDarkMode)
                 .apply()
             
             showToast(if (isDarkMode) "🌞 Modo claro activado" else "🌙 Modo oscuro activado")
-            
-            // Recargar la actividad para aplicar cambios
             recreate()
             
         } catch (e: Exception) {
@@ -813,28 +789,23 @@ private fun setupMenuButtonAnimation() {
     
     private fun clearCache() {
         try {
-            // Limpieza completa
             webView.clearCache(true)
             webView.clearHistory()
             webView.clearFormData()
             webView.clearSslPreferences()
             
-            // Cookies
             CookieManager.getInstance().removeAllCookies(null)
             CookieManager.getInstance().flush()
             
-            // Almacenamiento Web
             WebStorage.getInstance().deleteAllData()
             
             showToast("🧹 Caché y datos limpiados")
             
-            // Recargar la página después de limpiar - SOLO SI YA HAY UNA PÁGINA CARGADA
             if (!webView.url.isNullOrEmpty()) {
                 Handler(Looper.getMainLooper()).postDelayed({
                     webView.reload()
                 }, 500)
             } else {
-                // Si no hay página cargada, cargar la URL predeterminada
                 loadUrl(currentUrl)
             }
             
@@ -849,7 +820,7 @@ private fun setupMenuButtonAnimation() {
             val message = """
                 ⚡ ThunderNet APK ⚡
                 
-                Versión: 1.0.1
+                Versión: 1.1.0
                 
                 Aplicación oficial de ThunderNet
                 World of Warcraft
@@ -871,14 +842,12 @@ private fun setupMenuButtonAnimation() {
             
             dialog.show()
             
-            // Personalizar el diálogo
             try {
                 dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
             } catch (e: Exception) {
                 dialog.window?.setBackgroundDrawable(ColorDrawable(Color.parseColor("#0A1428")))
             }
             
-            // Personalizar título
             dialog.findViewById<TextView>(android.R.id.title)?.apply {
                 setTextColor(Color.parseColor("#00B4FF"))
                 textSize = 18f
@@ -886,7 +855,6 @@ private fun setupMenuButtonAnimation() {
                 setPadding(0, 16.dpToPx(), 0, 8.dpToPx())
             }
             
-            // Personalizar mensaje
             dialog.findViewById<TextView>(android.R.id.message)?.apply {
                 setTextColor(Color.WHITE)
                 textSize = 14f
@@ -895,7 +863,6 @@ private fun setupMenuButtonAnimation() {
                 setPadding(16.dpToPx(), 8.dpToPx(), 16.dpToPx(), 8.dpToPx())
             }
             
-            // Personalizar botón
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
                 setTextColor(Color.parseColor("#0A1428"))
                 setBackgroundColor(Color.parseColor("#00B4FF"))
@@ -922,7 +889,6 @@ private fun setupMenuButtonAnimation() {
     }
     
     private fun showErrorCrash(message: String) {
-        // Mostrar error fatal en pantalla completa
         setContentView(android.R.layout.simple_list_item_1)
         val textView: TextView = findViewById(android.R.id.text1)
         textView.text = "❌ Error: $message\n\n🔧 Reinstala la aplicación."
@@ -935,8 +901,6 @@ private fun setupMenuButtonAnimation() {
     private fun showToast(message: String) {
         try {
             val toast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
-            
-            // Personalizar el toast si es posible
             toast.view?.apply {
                 try {
                     setBackgroundResource(R.drawable.toast_background)
@@ -950,12 +914,10 @@ private fun setupMenuButtonAnimation() {
                     setPadding(24.dpToPx(), 16.dpToPx(), 24.dpToPx(), 16.dpToPx())
                 }
             }
-            
             toast.setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 100.dpToPx())
             toast.show()
             
         } catch (e: Exception) {
-            // Si falla la personalización, mostrar toast normal
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
     }
@@ -968,7 +930,6 @@ private fun setupMenuButtonAnimation() {
         ).toInt()
     }
     
-    // Manejo del botón atrás
     override fun onBackPressed() {
         if (::webView.isInitialized && webView.canGoBack()) {
             webView.goBack()
@@ -977,14 +938,12 @@ private fun setupMenuButtonAnimation() {
         }
     }
     
-    // Limpiar recursos cuando la actividad se destruye
     override fun onDestroy() {
         super.onDestroy()
         stopSplashAnimations()
         Log.d(TAG, "onDestroy - recursos limpiados")
     }
     
-    // Métodos de ciclo de vida para debugging
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "onStart")
