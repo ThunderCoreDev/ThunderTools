@@ -5,32 +5,94 @@
     android:viewportWidth="140"
     android:viewportHeight="140">
     
-    <!-- W de World of Warcraft estilo BattleNet -->
-    <path
-        android:name="w_letter"
-        android:fillColor="#00B4FF"
-        android:pathData="M30,40 L45,100 L60,60 L75,100 L90,40"
-        android:strokeColor="#00B4FF"
-        android:strokeWidth="8"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
-        
-    <!-- Detalle interior (opcional) -->
-    <path
-        android:name="w_detail"
-        android:fillColor="#00B4FF"
-        android:pathData="M48,68 L62,68"
-        android:strokeColor="#00B4FF"
-        android:strokeWidth="5"
-        android:strokeLineCap="round" />
-        
-    <!-- Efecto brillo -->
-    <path
-        android:name="w_highlight"
-        android:fillColor="#33C3FF"
-        android:pathData="M35,45 L50,95"
-        android:strokeColor="#33C3FF"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeAlpha="0.7" />
+    <!-- WoW estilo épico -->
+    <group>
+        <!-- W estilizada -->
+        <path
+            android:name="w_letter"
+            android:fillColor="#00B4FF"
+            android:pathData="M20,50 L35,90 L45,65 L55,90 L65,65 L75,90 L90,50"
+            android:strokeColor="#00B4FF"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+            
+        <!-- O estilizada (primera) -->
+        <path
+            android:name="o1_letter"
+            android:fillColor="transparent"
+            android:pathData="M100,70 q-15,0 -15,15 q0,15 15,15 q15,0 15,-15 q0,-15 -15,-15"
+            android:strokeColor="#00B4FF"
+            android:strokeWidth="7"
+            android:strokeLineCap="round" />
+            
+        <!-- O estilizada (segunda) -->
+        <path
+            android:name="o2_letter"
+            android:fillColor="transparent"
+            android:pathData="M125,70 q-15,0 -15,15 q0,15 15,15 q15,0 15,-15 q0,-15 -15,-15"
+            android:strokeColor="#00B4FF"
+            android:strokeWidth="7"
+            android:strokeLineCap="round" />
+            
+        <!-- Detalles W -->
+        <path
+            android:name="w_detail1"
+            android:fillColor="#33C3FF"
+            android:pathData="M40,70 L50,70"
+            android:strokeColor="#33C3FF"
+            android:strokeWidth="4"
+            android:strokeLineCap="round" />
+            
+        <path
+            android:name="w_detail2"
+            android:fillColor="#33C3FF"
+            android:pathData="M60,70 L70,70"
+            android:strokeColor="#33C3FF"
+            android:strokeWidth="4"
+            android:strokeLineCap="round" />
+            
+        <!-- Puntos en las O -->
+        <circle
+            android:name="o1_dot"
+            android:cx="100"
+            android:cy="70"
+            android:r="6"
+            android:fillColor="#00B4FF" />
+            
+        <circle
+            android:name="o2_dot"
+            android:cx="125"
+            android:cy="70"
+            android:r="6"
+            android:fillColor="#00B4FF" />
+            
+        <!-- Efectos de brillo -->
+        <path
+            android:name="glow_w"
+            android:fillColor="transparent"
+            android:pathData="M25,55 L40,85"
+            android:strokeColor="#66D2FF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:strokeAlpha="0.5" />
+            
+        <path
+            android:name="glow_o1"
+            android:fillColor="transparent"
+            android:pathData="M105,60 a10,10 0 0,1 0,20"
+            android:strokeColor="#66D2FF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:strokeAlpha="0.5" />
+            
+        <path
+            android:name="glow_o2"
+            android:fillColor="transparent"
+            android:pathData="M130,60 a10,10 0 0,1 0,20"
+            android:strokeColor="#66D2FF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:strokeAlpha="0.5" />
+    </group>
 </vector>

@@ -296,32 +296,37 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun setupMenuButtonAnimation() {
-        menuButton.setOnTouchListener { v, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    v.animate()
-                        .scaleX(0.9f)
-                        .scaleY(0.9f)
-                        .setDuration(100)
-                        .start()
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    v.animate()
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setDuration(100)
-                        .start()
-                    
-                    v.animate()
-                        .rotationBy(360f)
-                        .setDuration(500)
-                        .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
-                        .start()
-                }
+    menuButton.setOnTouchListener { v, event ->
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                // Animación de presionado (muy sutil)
+                v.animate()
+                    .scaleX(0.8f)
+                    .scaleY(0.8f)
+                    .alpha(0.7f)
+                    .setDuration(100)
+                    .start()
             }
-            false
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                // Animación de liberación
+                v.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .alpha(1f)
+                    .setDuration(100)
+                    .start()
+                
+                // Pequeña rotación
+                v.animate()
+                    .rotationBy(180f)
+                    .setDuration(300)
+                    .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
+                    .start()
+            }
         }
+        false
     }
+}
     
     private fun showOptionsMenu(view: View) {
         try {

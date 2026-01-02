@@ -19,24 +19,24 @@
         android:layout_height="3dp"
         android:layout_alignParentTop="true"
         android:max="100"
-        android:progressTint="#0078D7"
+        android:progressTint="#00B4FF"
         android:visibility="gone" />
 
-    <!-- Botón de menú flotante - MODIFICADO: Texto en lugar de ImageButton -->
+    <!-- Botón de menú flotante - PEQUEÑO Y TRANSPARENTE -->
     <Button
-        android:id="@+id/menuButton"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:layout_margin="16dp"
-        android:background="@drawable/ic_menu_button_background"
-        android:text="⚙️"
-        android:textSize="24sp"
-        android:textColor="#00B4FF"
-        android:gravity="center"
-        android:elevation="8dp"
-        android:contentDescription="Menú de opciones" />
+    android:id="@+id/menuButton"
+    android:layout_width="34dp"
+    android:layout_height="34dp"
+    android:layout_alignParentEnd="true"
+    android:layout_alignParentTop="true"
+    android:layout_margin="10dp"
+    android:background="@android:color/transparent"
+    android:text="⚙️"
+    android:textSize="15sp"
+    android:textColor="#00B4FF"
+    android:gravity="center"
+    android:contentDescription="Menú"
+    android:stateListAnimator="@null" />  <!-- Elimina la animación por defecto -->
 
     <!-- Layout de error -->
     <LinearLayout
@@ -71,7 +71,7 @@
             android:id="@+id/retryButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="#0078D7"
+            android:backgroundTint="#00B4FF"
             android:text="Reintentar"
             android:textColor="#FFFFFF" />
 
