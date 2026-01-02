@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var splashLayout: View
     private lateinit var preferences: SharedPreferences
     private lateinit var menuButton: Button
-    private var currentUrl: String = "http://tuservidor.com"
+    private var currentUrl: String = "http://172.16.1.1"
     private var loadingAnimationHandler: Handler? = null
     private var loadingAnimationRunnable: Runnable? = null
     
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "ThunderNetApp"
         private const val PREF_SERVER_URL = "server_url"
-        private const val DEFAULT_URL = "http://tuservidor.com"
+        private const val DEFAULT_URL = "http://172.16.1.1"
         private const val PREF_DARK_MODE = "dark_mode"
         
         // Nuevas preferencias para servidor WoW
@@ -52,10 +52,10 @@ class MainActivity : AppCompatActivity() {
         private const val PREF_WOW_PORT = "wow_port"
         
         private const val DEFAULT_WOW_SERVER = "127.0.0.1"
-        private const val DEFAULT_WOW_PORT = "8085" // Puerto típico de authserver
+        private const val DEFAULT_WOW_PORT = "8085"
         
         // Tiempo de timeout para ping
-        private const val PING_TIMEOUT = 3000 // 3 segundos
+        private const val PING_TIMEOUT = 3000
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -64,27 +64,21 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate iniciado")
         
         try {
-            // Inicializar SharedPreferences
             preferences = PreferenceManager.getDefaultSharedPreferences(this)
             
-            // Obtener la URL guardada
             currentUrl = preferences.getString(PREF_SERVER_URL, DEFAULT_URL) ?: DEFAULT_URL
-            
-            // Obtener configuración del servidor WoW
             wowServer = preferences.getString(PREF_WOW_SERVER, DEFAULT_WOW_SERVER) ?: DEFAULT_WOW_SERVER
             wowPort = preferences.getString(PREF_WOW_PORT, DEFAULT_WOW_PORT) ?: DEFAULT_WOW_PORT
             
             Log.d(TAG, "URL a cargar: $currentUrl")
             Log.d(TAG, "Servidor WoW: $wowServer:$wowPort")
             
-            // Configurar modo oscuro
             val darkModeEnabled = preferences.getBoolean(PREF_DARK_MODE, false)
             AppCompatDelegate.setDefaultNightMode(
                 if (darkModeEnabled) AppCompatDelegate.MODE_NIGHT_YES 
                 else AppCompatDelegate.MODE_NIGHT_NO
             )
             
-            // Mostrar pantalla de carga
             try {
                 setContentView(R.layout.splash_layout)
                 splashLayout = findViewById(R.id.splashLayout)
@@ -96,7 +90,6 @@ class MainActivity : AppCompatActivity() {
                 setContentView(android.R.layout.simple_list_item_1)
             }
             
-            // Esperar 5 segundos y cargar WebView
             Handler(Looper.getMainLooper()).postDelayed({
                 loadWebView()
             }, 5000)
@@ -200,6 +193,8 @@ class MainActivity : AppCompatActivity() {
             }
             
             setupMenuButtonAnimation()
+            menuButton.bringToFront()
+            menuButton.visibility = View.VISIBLE
             
             retryButton.setOnClickListener {
                 errorLayout.visibility = View.GONE
@@ -256,6 +251,9 @@ class MainActivity : AppCompatActivity() {
                     progressBar.visibility = View.GONE
                     injectMobileCSS(view)
                     
+                    // Corregir menús de FusionCMS
+                    fixFusionCMSMobileMenu()
+                    
                     if (view?.progress == 100) {
                         errorLayout.visibility = View.GONE
                         webView.visibility = View.VISIBLE
@@ -265,8 +263,23 @@ class MainActivity : AppCompatActivity() {
                 private fun injectMobileCSS(view: WebView?) {
                     val css = """
                         <style>
-                            html, body { width: 100% !important; max-width: 100% !important; }
+                            @viewport { width: device-width; }
+                            @-ms-viewport { width: device-width; }
+                            @-webkit-viewport { width: device-width; }
+                            
+                            html, body {
+                                width: 100% !important;
+                                height: 100% !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                overflow-x: hidden !important;
+                                max-width: 100% !important;
+                                -webkit-text-size-adjust: 100%;
+                            }
+                            
                             img { max-width: 100% !important; height: auto !important; }
+                            table { width: 100% !important; max-width: 100% !important; }
+                            * { max-width: 100% !important; box-sizing: border-box !important; }
                         </style>
                     """.trimIndent()
                     
@@ -274,7 +287,7 @@ class MainActivity : AppCompatActivity() {
                         if (!document.querySelector('meta[name=\"viewport\"]')) {
                             var meta = document.createElement('meta');
                             meta.name = 'viewport';
-                            meta.content = 'width=device-width, initial-scale=1.0';
+                            meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
                             document.head.appendChild(meta);
                         }
                     """.trimIndent(), null)
@@ -295,46 +308,189 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    private fun setupMenuButtonAnimation() {
-    menuButton.setOnTouchListener { v, event ->
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                // Animación de presionado (muy sutil)
-                v.animate()
-                    .scaleX(0.8f)
-                    .scaleY(0.8f)
-                    .alpha(0.7f)
-                    .setDuration(100)
-                    .start()
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                // Animación de liberación
-                v.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .alpha(1f)
-                    .setDuration(100)
-                    .start()
+    private fun fixFusionCMSMobileMenu() {
+        val fusionCMSCSS = """
+            <style>
+                /* Corregir menú de usuario FusionCMS */
+                .user-menu, .dropdown-menu, .user-info {
+                    max-width: 100% !important;
+                    width: 100% !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    position: fixed !important;
+                    z-index: 9999 !important;
+                }
                 
-                // Pequeña rotación
-                v.animate()
-                    .rotationBy(180f)
-                    .setDuration(300)
-                    .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
-                    .start()
+                /* Menús desplegables */
+                .dropdown {
+                    position: relative !important;
+                }
+                
+                .dropdown-content {
+                    position: absolute !important;
+                    width: 100% !important;
+                    max-width: 300px !important;
+                    left: 50% !important;
+                    transform: translateX(-50%) !important;
+                    z-index: 10000 !important;
+                }
+                
+                /* Avatar/Imagen de perfil */
+                .avatar, .user-avatar, .profile-pic {
+                    max-width: 60px !important;
+                    max-height: 60px !important;
+                    width: auto !important;
+                    height: auto !important;
+                }
+                
+                /* Items del menú */
+                .user-menu li, .dropdown-menu li {
+                    width: 100% !important;
+                    display: block !important;
+                    text-align: center !important;
+                    padding: 10px 5px !important;
+                }
+                
+                .user-menu a, .dropdown-menu a {
+                    display: block !important;
+                    padding: 12px 8px !important;
+                    font-size: 14px !important;
+                    white-space: normal !important;
+                    word-wrap: break-word !important;
+                }
+                
+                /* Overlay para móvil */
+                .dropdown-backdrop {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    background: rgba(0,0,0,0.5) !important;
+                    z-index: 9998 !important;
+                }
+                
+                /* Para menús específicos de FusionCMS */
+                #user-box, #user_menu, #account-menu {
+                    max-width: 100% !important;
+                    width: 100vw !important;
+                    box-sizing: border-box !important;
+                }
+                
+                /* Texto en menús */
+                .user-menu span, .username {
+                    font-size: 14px !important;
+                    padding: 8px !important;
+                    display: block !important;
+                }
+                
+                /* Ajustar contenedores */
+                .user-box-content, .user-info-container {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                }
+                
+                /* Scroll en menús largos */
+                .dropdown-menu {
+                    max-height: 70vh !important;
+                    overflow-y: auto !important;
+                }
+            </style>
+            
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.user-info, .username, .avatar').forEach(function(element) {
+                    element.addEventListener('click', function(e) {
+                        var menu = this.closest('.dropdown') || this.nextElementSibling;
+                        if (menu && menu.classList.contains('dropdown-menu')) {
+                            menu.style.position = 'fixed';
+                            menu.style.top = '50%';
+                            menu.style.left = '50%';
+                            menu.style.transform = 'translate(-50%, -50%)';
+                            menu.style.width = '90%';
+                            menu.style.maxWidth = '300px';
+                            menu.style.maxHeight = '80vh';
+                            menu.style.overflowY = 'auto';
+                            
+                            var backdrop = document.createElement('div');
+                            backdrop.className = 'dropdown-backdrop';
+                            backdrop.onclick = function() {
+                                menu.style.display = 'none';
+                                this.remove();
+                            };
+                            document.body.appendChild(backdrop);
+                            
+                            e.stopPropagation();
+                        }
+                    });
+                });
+                
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.dropdown')) {
+                        document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+                            menu.style.display = 'none';
+                        });
+                        document.querySelectorAll('.dropdown-backdrop').forEach(function(backdrop) {
+                            backdrop.remove();
+                        });
+                    }
+                });
+            });
+            </script>
+        """.trimIndent()
+        
+        webView.evaluateJavascript("""
+            if (!document.getElementById('fusioncms-mobile-fix')) {
+                var style = document.createElement('style');
+                style.id = 'fusioncms-mobile-fix';
+                style.innerHTML = `$fusionCMSCSS`;
+                document.head.appendChild(style);
             }
-        }
-        false
+            
+            setTimeout(function() {
+                var elements = document.querySelectorAll('.user-menu, .dropdown-menu, .user-info, .avatar');
+                elements.forEach(function(el) {
+                    el.style.maxWidth = '100%';
+                    el.style.boxSizing = 'border-box';
+                });
+            }, 1000);
+        """.trimIndent(), null)
     }
-}
+    
+    private fun setupMenuButtonAnimation() {
+        menuButton.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    v.animate()
+                        .scaleX(0.9f)
+                        .scaleY(0.9f)
+                        .setDuration(100)
+                        .start()
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start()
+                    
+                    v.animate()
+                        .rotationBy(180f)
+                        .setDuration(300)
+                        .setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
+                        .start()
+                }
+            }
+            false
+        }
+    }
     
     private fun showOptionsMenu(view: View) {
         try {
-            // MENÚ ACTUALIZADO: Añadida opción "Reino"
             val menuItems = listOf(
                 "🔄 Actualizar",
                 "⚙️ Configurar URL",
-                "🌐 Reino",  // NUEVA OPCIÓN
+                "👑 Reino",
                 "🌙 Modo Oscuro",
                 "🧹 Limpiar Caché",
                 "ℹ️ Acerca de"
@@ -358,7 +514,7 @@ class MainActivity : AppCompatActivity() {
             }
             
             AlertDialog.Builder(this)
-                .setTitle("⚡ ThunderNet APK ⚡")
+                .setTitle("⚡ ThunderNet WoW ⚡")
                 .setAdapter(adapter) { dialog, which ->
                     dialog.dismiss()
                     when (which) {
@@ -367,7 +523,7 @@ class MainActivity : AppCompatActivity() {
                             showToast("✅ Página actualizada")
                         }
                         1 -> showUrlConfigDialog()
-                        2 -> showRealmStatus()  // NUEVO: Mostrar estado del reino
+                        2 -> showRealmStatus()
                         3 -> toggleDarkMode()
                         4 -> clearCache()
                         5 -> showAboutDialog()
@@ -395,20 +551,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    // NUEVO: Diálogo para mostrar estado del reino
     private fun showRealmStatus() {
         Log.d(TAG, "Verificando estado del servidor: $wowServer:$wowPort")
         
-        // Mostrar diálogo de carga
         val loadingDialog = AlertDialog.Builder(this)
-            .setTitle("🌐 Verificando Reino...")
+            .setTitle("👑 Verificando Reino...")
             .setMessage("Conectando con el servidor...")
             .setCancelable(false)
             .create()
         
         loadingDialog.show()
         
-        // Ejecutar ping en un hilo separado
         Executors.newSingleThreadExecutor().execute {
             var isOnline = false
             var errorMessage = ""
@@ -422,7 +575,6 @@ class MainActivity : AppCompatActivity() {
                 
                 Log.d(TAG, "Intentando conectar a $wowServer:$port")
                 
-                // Intentar conexión socket
                 val socket = Socket()
                 socket.connect(InetSocketAddress(wowServer, port), PING_TIMEOUT)
                 socket.close()
@@ -435,7 +587,6 @@ class MainActivity : AppCompatActivity() {
                 isOnline = false
             }
             
-            // Volver al hilo principal para mostrar resultado
             runOnUiThread {
                 loadingDialog.dismiss()
                 showRealmStatusResult(isOnline, errorMessage)
@@ -453,14 +604,12 @@ class MainActivity : AppCompatActivity() {
             "❌ No se pudo conectar al servidor.\n\n$serverInfo\n\nError: ${if (errorMessage.isNotEmpty()) errorMessage else "Tiempo de espera agotado"}"
         }
         
-        // Crear layout personalizado
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(32.dpToPx(), 24.dpToPx(), 32.dpToPx(), 16.dpToPx())
             setBackgroundColor(Color.parseColor("#0A1428"))
         }
         
-        // Estado
         val statusView = TextView(this).apply {
             text = statusText
             setTextColor(Color.parseColor(statusColor))
@@ -470,7 +619,6 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, 0, 0, 20.dpToPx())
         }
         
-        // Mensaje
         val messageView = TextView(this).apply {
             text = message
             setTextColor(Color.WHITE)
@@ -480,7 +628,6 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, 0, 0, 24.dpToPx())
         }
         
-        // Indicador visual
         val indicator = View(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -496,7 +643,7 @@ class MainActivity : AppCompatActivity() {
         layout.addView(messageView)
         
         AlertDialog.Builder(this)
-            .setTitle("🌐 Estado del Reino")
+            .setTitle("👑 Estado del Reino")
             .setView(layout)
             .setPositiveButton("🔄 Reintentar") { dialog, _ ->
                 dialog.dismiss()
@@ -520,7 +667,6 @@ class MainActivity : AppCompatActivity() {
                     setPadding(0, 16.dpToPx(), 0, 8.dpToPx())
                 }
                 
-                // Personalizar botones
                 getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
                     setTextColor(Color.parseColor("#0A1428"))
                     setBackgroundColor(Color.parseColor("#00B4FF"))
@@ -539,7 +685,6 @@ class MainActivity : AppCompatActivity() {
             }
     }
     
-    // ACTUALIZADO: Diálogo de configuración de URL ahora incluye servidor WoW
     private fun showUrlConfigDialog() {
         try {
             val layout = LinearLayout(this).apply {
@@ -548,7 +693,6 @@ class MainActivity : AppCompatActivity() {
                 setBackgroundColor(Color.parseColor("#0A1428"))
             }
             
-            // Título
             val title = TextView(this).apply {
                 text = "⚙️ Configuración del Servidor"
                 setTextColor(Color.parseColor("#00B4FF"))
@@ -558,7 +702,6 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 0, 0, 20.dpToPx())
             }
             
-            // Sub-título 1: Página Web
             val subtitle1 = TextView(this).apply {
                 text = "🌐 Página Web:"
                 setTextColor(Color.WHITE)
@@ -567,7 +710,6 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 10.dpToPx(), 0, 8.dpToPx())
             }
             
-            // URL de la página web
             val urlEditText = EditText(this).apply {
                 setText(currentUrl)
                 hint = "Ej: http://tuservidor.com"
@@ -587,7 +729,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             
-            // Separador
             val separator = View(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -599,16 +740,14 @@ class MainActivity : AppCompatActivity() {
                 setBackgroundColor(Color.parseColor("#00B4FF"))
             }
             
-            // Sub-título 2: Servidor WoW
             val subtitle2 = TextView(this).apply {
-                text = "🌐 Servidor WoW:"
+                text = "👑 Servidor WoW:"
                 setTextColor(Color.WHITE)
                 textSize = 16f
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
                 setPadding(0, 10.dpToPx(), 0, 8.dpToPx())
             }
             
-            // Campo para servidor WoW
             val serverEditText = EditText(this).apply {
                 setText(wowServer)
                 hint = "IP o dominio del servidor"
@@ -628,7 +767,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             
-            // Campo para puerto WoW
             val portEditText = EditText(this).apply {
                 setText(wowPort)
                 hint = "Puerto (ej: 8085, 3724)"
@@ -659,7 +797,6 @@ class MainActivity : AppCompatActivity() {
             val dialog = AlertDialog.Builder(this)
                 .setView(layout)
                 .setPositiveButton("💾 GUARDAR TODO") { dialog, _ ->
-                    // Guardar URL de la página web
                     val newUrl = urlEditText.text.toString().trim()
                     if (newUrl.isNotEmpty()) {
                         currentUrl = if (newUrl.startsWith("http")) newUrl else "http://$newUrl"
@@ -668,7 +805,6 @@ class MainActivity : AppCompatActivity() {
                             .apply()
                     }
                     
-                    // Guardar configuración del servidor WoW
                     val newServer = serverEditText.text.toString().trim()
                     val newPort = portEditText.text.toString().trim()
                     
@@ -688,7 +824,6 @@ class MainActivity : AppCompatActivity() {
                     
                     showToast("✅ Configuración guardada")
                     
-                    // Recargar la página web si cambió la URL
                     if (newUrl.isNotEmpty() && newUrl != webView.url) {
                         loadUrl(currentUrl)
                     }
@@ -699,7 +834,6 @@ class MainActivity : AppCompatActivity() {
                     dialog.dismiss()
                 }
                 .setNeutralButton("🔄 VALORES PREDETERMINADOS") { dialog, _ ->
-                    // Restaurar valores predeterminados
                     currentUrl = DEFAULT_URL
                     wowServer = DEFAULT_WOW_SERVER
                     wowPort = DEFAULT_WOW_PORT
@@ -712,10 +846,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     
                     showToast("🔄 Valores predeterminados restaurados")
-                    
-                    // Recargar página con URL predeterminada
                     loadUrl(currentUrl)
-                    
                     dialog.dismiss()
                 }
                 .create()
@@ -728,7 +859,6 @@ class MainActivity : AppCompatActivity() {
                 dialog.window?.setBackgroundDrawable(ColorDrawable(Color.parseColor("#0A1428")))
             }
             
-            // Personalizar botones
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
                 setTextColor(Color.parseColor("#0A1428"))
                 setBackgroundColor(Color.parseColor("#00B4FF"))
@@ -751,7 +881,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    // Métodos existentes (sin cambios)...
     private fun loadUrl(url: String) {
         try {
             Log.d(TAG, "Cargando URL: $url")
@@ -823,7 +952,7 @@ class MainActivity : AppCompatActivity() {
     private fun showAboutDialog() {
         try {
             val message = """
-                ⚡ ThunderNet APK ⚡
+                ⚡ ThunderNet WoW ⚡
                 
                 Versión: 1.1.0
                 
