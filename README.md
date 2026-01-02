@@ -11,9 +11,6 @@
 
 Aplicación WebView estilo BattleNet para servidores World of Warcraft privados. Interfaz profesional con pantalla de carga animada y funciones avanzadas.
 
-## ✅ Compatibilidad
-
-- Está APK está diseñada exclusivamente para funcionar con FusionCMS aunque actualmente es compatible con otros CMS.
 
 ## ✨ Características
 
@@ -38,11 +35,11 @@ Aplicación WebView estilo BattleNet para servidores World of Warcraft privados.
 ⚙️ Funciones Avanzadas
 
 - ✅ Menú contextual con 5 opciones:
-- 🔄 Actualizar: Recargar la página actual
-- ⚙️ Configurar URL: Cambiar dirección del servidor
-- 🌙 Modo Oscuro/Claro: Alternar tema
-- 🧹 Limpiar Caché: Borrar datos temporales
-- ℹ️ Acerca de: Información de la aplicación
+  - 🔄 Actualizar: Recargar la página actual
+  - ⚙️ Configurar URL: Cambiar dirección del servidor
+  - 🌙 Modo Oscuro/Claro: Alternar tema
+  - 🧹 Limpiar Caché: Borrar datos temporales
+  - ℹ️ Acerca de: Información de la aplicación
 - ✅ Configuración persistente de URL personalizada
 - ✅ Detección de conexión a internet
 - ✅ Manejo de errores con interfaz de reintento
