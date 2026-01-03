@@ -1,0 +1,146 @@
+name: Release OSS (APK)
+
+on:
+  push:
+    tags:
+      - v*
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          android: false
+          dotnet: true
+          haskell: true
+          large-packages: true
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: actions/checkout@v3
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Create Secrets file
+        run: |
+          echo "Creating file with interpolated secrets"
+          cat <<EOF > ./lib/constant/secrets.dart
+          ${{ secrets.SECRETS }}
+          EOF
+
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v4
+        with:
+          channel: stable
+          version: 3.35.2
+
+      - name: Set Up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: "zulu"
+          java-version: "17"
+          cache: "gradle"
+
+      - name: Install flutter_rust_bridge_codegen
+        run: cargo install flutter_rust_bridge_codegen
+
+      - name: Install cargo-expand
+        run: cargo install cargo-expand
+
+      - name: Get Packages
+        run: flutter pub get
+
+      - name: Generate Rust
+        run: flutter_rust_bridge_codegen generate
+
+      - uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r29-beta4
+
+      - uses: SimonMarquis/android-accept-licenses@v1
+
+      - name: Build Release APKs
+        run: flutter build apk --release --split-per-abi
+
+      - name: Sign App
+        id: sign_app
+        uses: ilharp/sign-android-release@v2
+        with:
+          releaseDir: build/app/outputs/flutter-apk/
+          signingKey: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          keyAlias: ${{ secrets.RELEASE_SIGNING_ALIAS }}
+          keyStorePassword: ${{ secrets.RELEASE_SIGNING_PASSWORD }}
+          keyPassword: ${{ secrets.RELEASE_SIGNING_PASSWORD }}
+          buildToolsVersion: 34.0.0
+
+      - uses: jungwinter/split@v2
+        id: signed_files
+        with:
+          msg: ${{ steps.sign_app.outputs.signedFiles }}
+          separator: ":"
+
+      - name: Upload Release Build to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            ${{ steps.signed_files.outputs._0 }}
+            ${{ steps.signed_files.outputs._1 }}
+            ${{ steps.signed_files.outputs._2 }}
+            !*-release.apk
+
+      - name: Build Changelog
+        id: changelog
+        uses: ardalanamini/auto-changelog@v3
+        with:
+          mention-authors: false
+          mention-new-contributors: false
+          include-compare: false
+          semver: false
+
+      - name: Find and Replace
+        uses: mad9000/actions-find-and-replace-string@5
+        id: signed_file_path_0
+        with:
+          source: ${{ steps.signed_files.outputs._0 }}
+          find: "/github/workspace/"
+          replace: ""
+
+      - name: Find and Replace
+        uses: mad9000/actions-find-and-replace-string@5
+        id: signed_file_path_1
+        with:
+          source: ${{ steps.signed_files.outputs._1 }}
+          find: "/github/workspace/"
+          replace: ""
+
+      - name: Find and Replace
+        uses: mad9000/actions-find-and-replace-string@5
+        id: signed_file_path_2
+        with:
+          source: ${{ steps.signed_files.outputs._2 }}
+          find: "/github/workspace/"
+          replace: ""
+
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1.13.0
+        with:
+          artifacts: "${{ steps.signed_file_path_0.outputs.value }},${{ steps.signed_file_path_1.outputs.value }},${{ steps.signed_file_path_2.outputs.value }}"
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: true
+          name: Release ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}

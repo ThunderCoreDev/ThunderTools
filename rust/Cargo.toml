@@ -1,0 +1,18 @@
+[package]
+name = "rust_lib_GitSync"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+flutter_rust_bridge = "=2.11.1"
+git2 = { version = "0.20.2", features = ["vendored-libgit2"] }
+openssl = { version = "0.10.35", features = ["vendored"] }
+ssh-key = { version = "0.6.7", features = ["crypto", "encryption"] }
+osshkeys = "0.7.0"
+regex = "1.10.2"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
